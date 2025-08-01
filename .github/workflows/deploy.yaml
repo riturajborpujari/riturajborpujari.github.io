@@ -1,0 +1,35 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write  # Needed to push to gh-pages
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Git user
+        run: |
+          git config --global user.name "deploybot"
+          git config --global user.email "deploybot@riturajborpujari.github.io"
+
+      - name: Copy public folder
+        run: |
+          mkdir -p deploy
+          cp -r public/* deploy/
+
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_branch: gh-pages
+          publish_dir: ./deploy
+          force_orphan: true  # optional: resets branch history
+          github_token: ${{ secrets.GITHUB_TOKEN }}
