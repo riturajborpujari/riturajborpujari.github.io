@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Terminal Tools, Shell Aliases, and directory bookmarks</title>
+    <meta name="description" content="Using Unix tools in the terminal to build simple  directory bookmarks. Allows simple navigation above cd program without hurting your ability to work in a machine without
+" />
+  </head>
+  <body>
+	<header>
+		<a href="/">Rituraj Borpujari</a>
+	</header>
+    <main>
+      <h1>Terminal Tools, Shell Aliases, and directory bookmarks</h1>
+      <time>2024-04-28</time>
+      <article><p>I like using terminal tools and programs. They are so handy that you can't ignore once you get used to them. There are many of them at your disposal, each doing something which is unique in their own.</p>
+<p>They do their own thing best, and they work with each other. Take a look at <a href="https://en.wikipedia.org/wiki/Unix_philosophy">Unix Philosophy</a> to understand the guiding principles that these tools follow to make them so easy to work with!</p>
+<p>As I begin using these tools and the many ways in which they allow <a href="https://en.wikipedia.org/wiki/Function_composition_(computer_science)">composability</a>, I found myself using such composed commands and even scripts. Here's one that allows me to move to frequently used directories without typing the path everytime, from any directory I'm in!</p>
+<h2 id="directory-bookmarks">Directory bookmarks</h2>
+<p>We use <code>cd</code> a lot in terminal. It allows us to change to the directory we want to work on. As I started using <a href="https://wiki.archlinux.org/title/fzf">fzf</a>, finding a specific subdirectory became much more easier than before. I can type in <code>cd $(fzf)</code> and it will open up a search window where I can <a href="https://en.wikipedia.org/wiki/Approximate_string_matching">fuzzy-search</a> for a specific directory. I can write a shell alias like <code>alias cdf=&quot;cd $(fzf)&quot;</code> and then I can just type in <code>cdf</code> and press <code>return</code> to activate the command. Its great!</p>
+<p>But still, when I'm deep in a particular directory and I wanted to move to another directory which is not a sub dir this gives me a problem. Because the required directory that I want to move into is not a subdirectory, I can't just <code>cdf</code> any more (atleast not from the current dir). I have to move up the directory structure untill the required directory becomes a subdir to the present working directory. This is inadequate!</p>
+<p>What if I can store certain directories that I frequently <code>cd</code> into, somewhere in a file, and then use <code>fzf</code> to match and <code>cd</code> into whichever one I want. That would be awesome!</p>
+<p>That's what I built with <strong><code>dmk</code> (directory bookmark)</strong>. Its a set of two shell aliases to help me navigate to any directory with ease. From anywhere!!!</p>
+<h3 id="marking-directories-as-bookmarks">Marking directories as bookmarks</h3>
+<p>First things first, I need a way to mark certain directories as important so that I can come back to them when needed. For this, I just need to save the directory path into a file.</p>
+<p>If I run the command <code>pwd &gt;&gt; ~/.dmks</code>, the present working directory path gets appended to a file called <code>.dmks</code> in my home directory <code>~</code>. Here, <code>pwd</code> command prints the present working directory to terminal, and <code>&gt;&gt;</code> causes that output to get appended to the filename provided after.</p>
+<p>For simpler frequent usage, I created an alias <code>alias dmk=&quot;pwd &gt;&gt; ~/.dmks&quot;</code>. I added this command into my shell init rc file <code>~/.bashrc</code> and the alias is available from any shell window I open next.</p>
+<h3 id="moving-into-a-bookmarked-directory">Moving into a bookmarked directory</h3>
+<p>Okay, now that we have a way of marking directories by saving their path into a file, its time to use <code>fzf</code> to move into one.</p>
+<p>For this I run the command <code>cd $(cat ~/.dmks | fzf)</code>. This moves into the directory which is given by the <a href="https://en.wikiversity.org/wiki/Bash_programming/Subshells">sub-shell command</a> <code>cat ~/.dmks | fzf</code>. Whatever is the output of this sub-shell command gets used by <code>cd</code> and it will cause the change in working directory. It's key to note that, <code>cat ~/.dmks</code> prints the content of the file <code>~/.dmks</code> into the shell and because of the pipe operator <code>|</code> it gets passed on to <code>fzf</code>. This file has all of our marked directories which we marked with <code>dmk</code> and this list is passed on to FZF. FZF then shows an interactive search window, from which we can search the required directory from the list of marked directories and select the one we need.</p>
+<p>Again, to help simplify running this command regularly, I have created a shell alias for this too! <code>alias cdmk=&quot;cd \$(cat ~/.dmks | fzf)&quot;</code> creates an alias and I write this command in the shell rc file <code>~/.bashrc</code> to make it available in any new shell window as well.</p>
+<p>Note the escape character <code>\</code> is required before <code>$</code> when writing into the shell rc file! Otherwise, the shell will execute the command itself when initializing the alias! We don't want that! We want us to be able to use the alias, and when we do that, we need the command to run!</p>
+<p>That is that, and I get directory bookmark system available in any of my shell window!!! <code>dmk</code> and <code>cdmk</code>!!!</p>
+<p>P.S. here is the <a href="https://gist.github.com/riturajborpujari/096d8b704157a7ad3eb5f8237ba05b52">link to the gist containing the aliases</a>.</p>
+<p>Cheers!</p>
+</article>
+    </main>
+
+	<footer>
+		<small>Powered by Bob</small>
+	</footer>
+  </body>
+  <style>
+    html {
+      font-size: 14pt;
+      font-family: sans-serif;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 1024px;
+      padding: 16px;
+    }
+    header {
+      padding: 16px 0;
+      box-shadow: 0 1px 0 #ddd;
+    }
+    table {
+      border: collapse;
+    }
+    table th {
+      background-color: #282828;
+      color: #d0d0d0;
+    }
+    td,th {
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+    }
+    pre {
+      background-color: #282829;
+      padding: 16px;
+      border-radius: 4px;
+	  font-family: monospace;
+	  font-size: 12pt;
+    }
+    code {
+      color: #dd2222;
+    }
+    pre code {
+      color: #d0d0d0;
+    }
+	footer {
+		text-align: center;
+		padding: 8px;
+		color: #666;
+		font-size: 10pt;
+	}
+  </style>
+</html>

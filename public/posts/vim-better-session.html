@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Better sessions with VIM</title>
+    <meta name="description" content="Vim sessions are great. Can we make it better?" />
+  </head>
+  <body>
+	<header>
+		<a href="/">Rituraj Borpujari</a>
+	</header>
+    <main>
+      <h1>Better sessions with VIM</h1>
+      <time>2025-07-23</time>
+      <article><p>Vim sessions are great! They give me power to jump back into whatever I was
+working on earlier with ease. Among other things, all my open buffers are
+restored, and the <code>.viminfo</code> file keeps track of my <code>:marks</code>, <code>:jumps</code> and
+<code>:registers</code> already. So it feels like I am actually continuing from where I
+left off.</p>
+<p>But, I like to work on multiple things. Small side-projects, or POCs, or an idea
+I've been thinking about implementing for so long. They all coexist in my system
+as partially completed or just started code. Also, I don't keep notes about code
+project ideas. I start it off as a project itself.</p>
+<p>Now this is where Vim needs a custom flow for me. I can easily create and
+maintain different sessions for my different projects. But the <code>.viminfo</code> file
+is shared among them. So the <code>:marks</code> are shared which is a pain. To help me with this, I created my custom Session management code and that's
+what BetterSessions is!</p>
+<p>BetterSessions is not anything new. It just wraps vim sessions along with
+custom viminfo together. Here's how it happens</p>
+<p>For storing sessions,</p>
+<ol>
+<li>Store session normally with <code>:mksesion! &lt;session_name&gt;.vim</code></li>
+<li>Write the current <code>.viminfo</code> with <code>:wviminfo! &lt;session_name&gt;.viminfo</code></li>
+</ol>
+<p>For loading sessions, we just do the same thing in reverse</p>
+<ol>
+<li>Load session normally with <code>:source &lt;session_name&gt;.vim</code></li>
+<li>Read <code>viminfo</code> with <code>:rviminfo! &lt;session_name&gt;.viminfo</code></li>
+</ol>
+<p>Voila! Now you have separate viminfo for each session you store, and thus your
+marks, registers, jumps etc are restored when you load the session</p>
+<p>Cleaning up, I used <code>$HOME/.local/state/vim/better-sessions</code> to store the
+session and viminfo files. I also added commands <code>:SessionLoad &lt;session_name&gt;</code>
+and <code>:SessionStore &lt;session_name&gt;</code> to help me add keybinds for this.
+Just for better usability I also added completion options for the commands, so
+typing <code>:SessionLoad &lt;TAB&gt;</code> will show you the list of sessions available under
+better-sessions.</p>
+<p>You can find my code for reference at
+<a href="https://github.com/riturajborpujari/better-session.vim">better-session</a></p>
+<p>Cheers</p>
+</article>
+    </main>
+
+	<footer>
+		<small>Powered by Bob</small>
+	</footer>
+  </body>
+  <style>
+    html {
+      font-size: 14pt;
+      font-family: sans-serif;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 1024px;
+      padding: 16px;
+    }
+    header {
+      padding: 16px 0;
+      box-shadow: 0 1px 0 #ddd;
+    }
+    table {
+      border: collapse;
+    }
+    table th {
+      background-color: #282828;
+      color: #d0d0d0;
+    }
+    td,th {
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+    }
+    pre {
+      background-color: #282829;
+      padding: 16px;
+      border-radius: 4px;
+	  font-family: monospace;
+	  font-size: 12pt;
+    }
+    code {
+      color: #dd2222;
+    }
+    pre code {
+      color: #d0d0d0;
+    }
+	footer {
+		text-align: center;
+		padding: 8px;
+		color: #666;
+		font-size: 10pt;
+	}
+  </style>
+</html>

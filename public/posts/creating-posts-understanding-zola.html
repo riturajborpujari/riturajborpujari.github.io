@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Creating posts, understanding Zola</title>
+    <meta name="description" content="Understanding Zola static site generator" />
+  </head>
+  <body>
+	<header>
+		<a href="/">Rituraj Borpujari</a>
+	</header>
+    <main>
+      <h1>Creating posts, understanding Zola</h1>
+      <time>2024-03-29</time>
+      <article><p>Its been a day since I started working on my static blog with Zola. And frankly speaking, its been really simple. I've been following their onboarding guide from their website and here's what my structure looks like as of now.</p>
+<pre><code class="language-shell">website-root/
+    templates/
+    content/
+    static/
+    themes/
+    config.toml
+</code></pre>
+<p>This directory structure gets created when we run <code>zola init &lt;WEBSITE_ROOT&gt;</code></p>
+<p>There's the <code>templates</code> directory which is meant for HTML templates for the pages of the site. I have <code>base.html</code> which, as the name suggests, is the base template from which all other template would extend. The first one of which is the <code>index.html</code> file, which forms the main or landing page for my blog. And there's the <code>post.html</code> file which forms the template for the posts that I'm going to write on my blog (like this one). Then there also is <code>posts-page.html</code> which would contain the list of links to individual posts.</p>
+<p>The <code>content</code> directory would contain my actual data files. As of now, I've created a subdir inside it calling <code>posts</code>, which will contain all my blog posts. This subdirectory structure forms the basis of the web url / path. For example, the file for this post is in <code>&lt;WEBSITE_ROOT&gt;/content/posts/creating-posts-understanding-zola.md</code> which is why its address takes on the structure <code>&lt;WEBSITE_DOMAIN&gt;/posts/creating-posts-understanding-zola</code>.</p>
+<p>The other directories <code>themes</code> and <code>static</code> are currently empty as I've not reached the stage where I start applying themes and images to my site.</p>
+<p>I've followed the guide for now and haven't changed much in my process. The content of the template files are, for example, pretty much the same as what is present in their guide. I've however changed the subdir <code>content/posts</code> from their guided <code>content/blog</code> for no apparent reason, other than my own instinct.</p>
+<p>I am, however, able to create posts like this one. Yeah its that simple. There is no design, no style; but its exactly what is is. A blog. Simple enough. And simple works for me now.</p>
+<p>Until next time,
+Cheers!</p>
+</article>
+    </main>
+
+	<footer>
+		<small>Powered by Bob</small>
+	</footer>
+  </body>
+  <style>
+    html {
+      font-size: 14pt;
+      font-family: sans-serif;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 1024px;
+      padding: 16px;
+    }
+    header {
+      padding: 16px 0;
+      box-shadow: 0 1px 0 #ddd;
+    }
+    table {
+      border: collapse;
+    }
+    table th {
+      background-color: #282828;
+      color: #d0d0d0;
+    }
+    td,th {
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+    }
+    pre {
+      background-color: #282829;
+      padding: 16px;
+      border-radius: 4px;
+	  font-family: monospace;
+	  font-size: 12pt;
+    }
+    code {
+      color: #dd2222;
+    }
+    pre code {
+      color: #d0d0d0;
+    }
+	footer {
+		text-align: center;
+		padding: 8px;
+		color: #666;
+		font-size: 10pt;
+	}
+  </style>
+</html>

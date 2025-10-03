@@ -1,60 +1,152 @@
-<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>Rituraj Borpujari</title>
-        <meta name="description" content="Check out what I'm up to, read my
-                    posts">
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
+<head>
+	<title>Rituraj Borpujari</title>
+	<meta name="description" content="Check out what I'm up to, read my posts"/>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
 
-    <body>
-        <h1><a href="/">Rituraj Borpujari</a></h1>
+<body>
+	<a href="/"><h1>Rituraj Borpujari</h1></a>
+	<p>Random stuff about programming, life and such...</p>
 
-        <p>Hi! My name is Rituraj Borpujari. I am a programmer working at
-        Uptycs. In my free time, I try out simple stuff for fun and learning.
-        Some of them might have daily use too.</p>
+    <h2>Links</h2>
+    <ul>
+        <li>
+            <a href="https://in.linkedin.com/in/riturajborpujari">
+                in.linkedin.com/in/riturajborpujari
+            </a> - my LinkedIn profile
+        </li>
+        <li>
+            <a href="https://github.com/riturajborpujari">
+                github.com/riturajborpujari
+            </a> - my Github profile
+        </li>
+        <li>
+            <a href="https://x.com/thisisrituraj">
+                x.com/thisisrituraj
+            </a> - my X profile
+        </li>
+    </ul>
 
-        <p>This site is the best place to know what I'm upto. I would be posting
-        updates here. I do have my social accounts listed below, so those would
-        be a better place if you want to get in touch</p>
+	<h2>Posts</h2>
+	
+	<main>
+		
+		<ul>
+			<li>
+				<strong>Better sessions with VIM</strong>
+				<p>Vim sessions are great. Can we make it better?</p>
+				<a href="/posts/vim-better-session">Read more</a>
+			</li>
+		</ul>
+		
+		<ul>
+			<li>
+				<strong>Building Adda: A high performance group chat application in C</strong>
+				<p>Learning Network programming and creating a multi-user  single-group chat application with C standard library. Uses Posix threads and IO Multiplexing to handle thousands of users  simulataneously with very minimal resource usage.
+</p>
+				<a href="/posts/adda-a-high-perf-chat-app-in-c">Read more</a>
+			</li>
+		</ul>
+		
+		<ul>
+			<li>
+				<strong>Building a Downloader in Go</strong>
+				<p>Building a HTTP(s) downloader using the Go standard libray
+</p>
+				<a href="/posts/building-a-downloader-in-go">Read more</a>
+			</li>
+		</ul>
+		
+		<ul>
+			<li>
+				<strong>Competing with JSON.stringify - by building a custom one</strong>
+				<p>Building out a custom JSON serializer for fun, and testing
+</p>
+				<a href="/posts/competing-with-json-stringify">Read more</a>
+			</li>
+		</ul>
+		
+		<ul>
+			<li>
+				<strong>Terminal Tools, Shell Aliases, and directory bookmarks</strong>
+				<p>Using Unix tools in the terminal to build simple  directory bookmarks. Allows simple navigation above cd program without hurting your ability to work in a machine without
+</p>
+				<a href="/posts/terminal-tools-shell-aliases-directory-bookmarks">Read more</a>
+			</li>
+		</ul>
+		
+		<ul>
+			<li>
+				<strong>A voice of my own</strong>
+				<p>Starting a blog to share thoughts about programming and stuff</p>
+				<a href="/posts/a-voice-of-my-own">Read more</a>
+			</li>
+		</ul>
+		
+		<ul>
+			<li>
+				<strong>Creating posts, understanding Zola</strong>
+				<p>Understanding Zola static site generator</p>
+				<a href="/posts/creating-posts-understanding-zola">Read more</a>
+			</li>
+		</ul>
+		
+		<ul>
+			<li>
+				<strong>First thoughts</strong>
+				<p>The intent with this blog</p>
+				<a href="/posts/first-thoughts">Read more</a>
+			</li>
+		</ul>
+		
+	</main>
 
-        <h2>Links</h2>
-        <ul>
-            <li>
-                <a href="https://in.linkedin.com/in/riturajborpujari">
-                    in.linkedin.com/in/riturajborpujari
-                </a> - my LinkedIn profile
-            </li>
-            <li>
-                <a href="https://github.com/riturajborpujari">
-                    github.com/riturajborpujari
-                </a> - my Github profile
-            </li>
-            <li>
-                <a href="https://x.com/thisisrituraj">
-                    x.com/thisisrituraj
-                </a> - my X profile
-            </li>
-        </ul>
+	<footer>
+		<small>Powered by Bob</small>
+	</footer>
 
-        <br/>
-
-        <footer>
-            <small>&copy;2025 Rituraj Borpujari</small>
-        </footer>
-    </body>
-<style>
-html{
-    font-size: 14pt;
-}
-body {
-    margin: 0 auto;
-    max-width: 640px;
-}
-ul {
-    margin: 0;
-    padding: 0 1rem;
-}
-</style>
+	<style>
+		* {
+			box-sizing: border-box;
+		}
+		html {
+			font-size: 14pt;
+			font-family: sans-serif;
+		}
+		body {
+			margin: 0 auto;
+			max-width: 1024px;
+			padding: 16px;
+		}
+		h2 {
+			font-size: 1.4rem;
+			border-bottom: 1px solid #ddd;
+		}
+		ul {
+			margin: 0;
+			padding: 0 20px;
+		}
+		li {
+			padding: 4px 0;
+		}
+		main ul li {
+			border-bottom: 1px solid #ddd;
+		}
+		em {
+			color: #4466dd;
+			font-style: normal;
+		}
+		a {
+			text-decoration: none;
+		}
+		footer {
+			text-align: center;
+			padding: 8px;
+			color: #666;
+			font-size: 10pt;
+		}
+	</style>
+</body>
 </html>
