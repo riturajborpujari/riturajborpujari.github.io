@@ -11,7 +11,7 @@
 	</header>
     <main>
       <h1>Better sessions with VIM</h1>
-      <time>2025-07-23</time>
+      <span>2025-07-23</span>
       <article><p>Vim sessions are great! They give me power to jump back into whatever I was
 working on earlier with ease. Among other things, all my open buffers are
 restored, and the <code>.viminfo</code> file keeps track of my <code>:marks</code>, <code>:jumps</code> and
@@ -56,48 +56,68 @@ better-sessions.</p>
 	</footer>
   </body>
   <style>
-    html {
-      font-size: 14pt;
-      font-family: sans-serif;
-    }
-    body {
-      margin: 0 auto;
-      max-width: 1024px;
-      padding: 16px;
-    }
-    header {
-      padding: 16px 0;
-      box-shadow: 0 1px 0 #ddd;
-    }
-    table {
-      border: collapse;
-    }
-    table th {
-      background-color: #282828;
-      color: #d0d0d0;
-    }
-    td,th {
-      padding: 4px 8px;
-      border: 1px solid #ddd;
-    }
-    pre {
-      background-color: #282829;
-      padding: 16px;
-      border-radius: 4px;
-	  font-family: monospace;
-	  font-size: 12pt;
-    }
-    code {
-      color: #dd2222;
-    }
-    pre code {
-      color: #d0d0d0;
-    }
-	footer {
-		text-align: center;
-		padding: 8px;
-		color: #666;
-		font-size: 10pt;
-	}
+		* {
+			box-sizing: border-box;
+		}
+		html {
+		  font-size: 14pt;
+		  font-family: sans-serif;
+		}
+		body {
+		  margin: 0 auto;
+		  max-width: 1024px;
+		  padding: 16px;
+		}
+		header {
+		  padding: 16px 0;
+		  box-shadow: 0 1px 0 #ddd;
+		}
+		ul {
+			margin: 0;
+			padding: 0 20px;
+		}
+		li {
+			padding: 4px 0;
+		}
+		main ul li {
+			border-bottom: 1px solid #ddd;
+		}
+		em {
+			color: #4466dd;
+			font-style: normal;
+		}
+		a {
+			text-decoration: none;
+		}
+		table {
+		  border: collapse;
+		}
+		table th {
+		  background-color: #282828;
+		  color: #d0d0d0;
+		}
+		td,th {
+		  padding: 4px 8px;
+		  border: 1px solid #ddd;
+		}
+		pre {
+		  background-color: #282829;
+		  padding: 16px;
+		  border-radius: 4px;
+		  font-family: monospace;
+		  font-size: 12pt;
+		}
+		code {
+		  color: #dd2222;
+		}
+		pre code {
+		  color: #d0d0d0;
+		}
+		footer {
+			text-align: center;
+			padding: 8px;
+			color: #666;
+			font-size: 10pt;
+		}
   </style>
 </html>
