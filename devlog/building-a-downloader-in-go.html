@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2026-05-22 Fri 16:53 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Building a Downloader in Go</title>
+<meta name="author" content="Rituraj Borpujari" />
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<div id="preamble" class="status">
+<div class="site-nav"><a href="/">Home</a></div>
+</div>
+<div id="content" class="content">
+<h1 class="title">Building a Downloader in Go</h1>
+<p>
+People say Go is well suited for Network applications. With its light Goroutines
+and huge standard library it can get most of the job done without even needing a
+third-party library.
+</p>
+
+<p>
+Great, let me build a terminal program to download files.
+</p>
+<div id="outline-container-org6cc7593" class="outline-2">
+<h2 id="org6cc7593">Accio</h2>
+<div class="outline-text-2" id="text-org6cc7593">
+<p>
+The <a href="https://harrypotter.fandom.com/wiki/Summoning_Charm">summoning charm from Harry Potter</a> seems like a fit name for my
+downloader. Like when Harry Potter says <i>"Accio Dittany"</i> and out pops the bottle
+of Dittany potion from Hermione's bag with an <i>"Undectable Extension Charm"</i>, our
+version of Accio would do something similar, albeit with URLs.
+</p>
+
+<p>
+So running <code>accio url</code> would get you the file from the <code>url</code>.
+</p>
+
+<p>
+Simple enough! Let's start then.
+</p>
+</div>
+</div>
+<div id="outline-container-org376e9cc" class="outline-2">
+<h2 id="org376e9cc">The process</h2>
+<div class="outline-text-2" id="text-org376e9cc">
+<p>
+The module <code>net/http</code> gives us this amazing method for making a GET request -
+</p>
+
+<p>
+<code>http.Get(url string) (resp *httpResponse, err error)</code>
+</p>
+
+<p>
+With this, we can run a <code>GET</code> request to <code>url</code> and we get a response object (of type
+<code>httpResponse</code>) and a possible error (of type <code>error</code>). We check for any error that
+might have occured while making the request and then move on to reading the data
+bytes from <code>httpResponse.Body</code>.
+</p>
+
+<p>
+But before reading the body, we would need to create and open a file for writing
+with the following method. And <code>os</code> module has the capability we need
+</p>
+
+<div class="org-src-container">
+<pre class="src src-go">os.<span style="color: #fdc04b;">OpenFile</span>(name <span style="color: #d0f0d0;">string</span>, flag <span style="color: #d0f0d0;">int</span>, perm <span style="color: #d0f0d0;">fs.FileMode</span>) (*<span style="color: #d0f0d0;">os.File</span>, <span style="color: #d0f0d0;">error</span>)
+</pre>
+</div>
+
+<p>
+We also need <code>os</code> to get the CLI argument for URL being passed into our program by
+the user while running command <code>accio URL</code>. We need <code>io</code> module because it has
+defined the <code>io.EOF</code> error value that we need to test to know when we've reached
+the end of reading the response body. With the file opened and the response body
+ready for reading, we would simply need to loop this following
+</p>
+</div>
+<div id="outline-container-org141b708" class="outline-3">
+<h3 id="org141b708">Copy Data process</h3>
+<div class="outline-text-3" id="text-org141b708">
+<ol class="org-ol">
+<li>Initialize a buffer</li>
+<li>Read <code>n</code> bytes from response body into a buffer</li>
+<li>If <code>n</code> is non-zero we write <code>n</code> bytes to the file</li>
+<li>If error occured is <code>EOF</code> (End of file - indicates response data end)
+We break the loop (go to step 6)</li>
+<li>Go to step 2 (repeat)</li>
+<li>We close the file and the response body</li>
+</ol>
+
+
+<p>
+Here's the actual code
+</p>
+
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #efefef;">response</span>, <span style="color: #efefef;">err</span> := http.<span style="color: #fdc04b;">Get</span>(downloadUrl)
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">handle error
+</span><span style="color: #efefef;">defer</span> response.Body.<span style="color: #fdc04b;">Close</span>()
+
+<span style="color: #efefef;">file</span>, <span style="color: #efefef;">err</span> := os.<span style="color: #fdc04b;">OpenFile</span>(
+    <span style="color: #30d020;">"download"</span>,
+    os.O_WRONLY | os.O_CREATE,
+    os.ModePerm,
+)
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">handle error
+</span><span style="color: #efefef;">defer</span> file.<span style="color: #fdc04b;">Close</span>()
+
+<span style="color: #efefef;">buffer</span> := <span style="color: #fdc04b;">make</span>([]<span style="color: #d0f0d0;">byte</span>, 512)
+<span style="color: #efefef;">for</span> {
+    buffer = buffer[0:512]
+    <span style="color: #efefef;">n</span>, <span style="color: #efefef;">err</span> := response.Body.<span style="color: #fdc04b;">Read</span>(buffer)
+
+    <span style="color: #efefef;">if</span> n &gt; 0 {
+        file.<span style="color: #fdc04b;">Write</span>(buffer[0:n])
+    }
+
+    <span style="color: #efefef;">if</span> err != <span style="color: #30d020;">nil</span> {
+        <span style="color: #efefef;">if</span> err != io.EOF {
+            fmt.<span style="color: #fdc04b;">Fprintf</span>(
+                os.Stderr,
+                <span style="color: #30d020;">"download error: %s\n"</span>,
+                err,
+            )
+            os.<span style="color: #fdc04b;">Exit</span>(-1)
+        }
+        <span style="color: #efefef;">break</span>
+    }
+}
+</pre>
+</div>
+
+<p>
+We open the file with <code>flags</code> as <code>os.O_WRONLY | os.O_CREATE</code> which causes it to open
+a file for writing and the <code>perm</code> as <code>os.ModePerm</code> so that the opened file gets the
+same permissions as our executable program <code>accio</code>
+</p>
+
+<p>
+We reset the <code>buffer</code> slice's capacity to <code>512</code> each time in the loop to utilize the
+full capacity and let the <code>Read</code> method of <code>response.Body</code> to fill it up with <code>n</code>
+bytes.
+</p>
+
+<p>
+We then proceed to write only <code>n</code> bytes to the file because that's how much we
+read in this iteration from <code>response.Body</code>
+</p>
+
+<p>
+If error has occured, we need to stop everything. If the error is not <code>EOF</code> we
+also log this onto the terminal. Otherwise, we silently break the loop
+</p>
+
+<p>
+## Showing progress The next part is to show progress of the download. For this
+I'm going to use the channel feature of golang.
+</p>
+
+<p>
+Basically the download (more specifically the copy of bytes from response body
+to file) would be happening on another go routine and it will send progress
+stats over a channel. The main routine can then read messages from this channel
+to display progress.
+</p>
+
+<p>
+Here's the structure I used for the download progress status message
+</p>
+
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #efefef;">type</span> <span style="color: #d0f0d0;">DownloadStatus</span> <span style="color: #efefef;">struct</span> {
+    Error           <span style="color: #d0f0d0;">error</span>
+    IsComplete      <span style="color: #d0f0d0;">bool</span>
+    BytesDownloaded <span style="color: #d0f0d0;">int64</span>
+}
+</pre>
+</div>
+
+<p>
+This will suffice. The copying logic will post a message of type <code>DownloadStatus</code>
+on the <code>statusChannel</code> channel so that the main routine can display the progress
+</p>
+
+<p>
+here's the updated function to copy data from <code>src</code> to <code>dest</code> while posting updates
+of the progress
+</p>
+
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #efefef;">func</span> <span style="color: #fdc04b;">copyVerbose</span>(<span style="color: #efefef;">dest</span> <span style="color: #d0f0d0;">io.Writer</span>,
+                 <span style="color: #efefef;">src</span> <span style="color: #d0f0d0;">io.Reader</span>,
+                 <span style="color: #efefef;">statusChannel</span> <span style="color: #efefef;">chan</span> <span style="color: #d0f0d0;">DownloadStatus</span>) {
+    <span style="color: #efefef;">buf</span> := <span style="color: #fdc04b;">make</span>([]<span style="color: #d0f0d0;">byte</span>, COPY_BUFFER_SIZE)
+    <span style="color: #efefef;">status</span> := <span style="color: #d0f0d0;">DownloadStatus</span>{}
+
+    <span style="color: #efefef;">for</span> {
+        <span style="color: #efefef;">nread</span>, <span style="color: #efefef;">err</span> := src.<span style="color: #fdc04b;">Read</span>(buf)
+        <span style="color: #efefef;">if</span> nread &gt; 0 {
+            <span style="color: #efefef;">nwritten</span>, <span style="color: #efefef;">err</span> := dest.<span style="color: #fdc04b;">Write</span>(buf[0:nread])
+            <span style="color: #efefef;">if</span> err != <span style="color: #30d020;">nil</span> {
+                status.Error = err
+                <span style="color: #efefef;">break</span>
+            }
+            status.BytesDownloaded += <span style="color: #fdc04b;">int64</span>(nwritten)
+        }
+        <span style="color: #efefef;">if</span> err != <span style="color: #30d020;">nil</span> {
+            <span style="color: #efefef;">if</span> err == io.EOF {
+                status.IsComplete = <span style="color: #30d020;">true</span>
+            } <span style="color: #efefef;">else</span> {
+                status.Error = err
+            }
+        }
+        statusChannel &lt;- status
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org028d2a6" class="outline-3">
+<h3 id="org028d2a6">Showing progress in</h3>
+<div class="outline-text-3" id="text-org028d2a6">
+<p>
+Now to show progress on the <code>main</code> routine, we need to do this
+</p>
+
+<ol class="org-ol">
+<li>create a ticker (which ticks periodically at say 500 ms)</li>
+<li>use <code>select</code> to read from ticker and the <code>statusChannel</code></li>
+<li>if read from statusChannel, store it in a local variable</li>
+<li>if read from ticker channel, show the progress</li>
+<li>go to step 2 and repeat</li>
+</ol>
+
+<p>
+of course, we would close this repeat loop once we find the status message
+contains <code>IsComplete</code> as <code>true</code>
+</p>
+
+<p>
+here's the code for that (partial <code>main</code> function)
+</p>
+
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #efefef;">lastStatus</span> := <span style="color: #d0f0d0;">DownloadStatus</span>{}
+<span style="color: #efefef;">ticker</span>:= time.<span style="color: #fdc04b;">NewTicker</span>(time.Millisecond * 500)
+<span style="color: #efefef;">go</span> <span style="color: #fdc04b;">downloadUrl</span>(url, &amp;<span style="color: #d0f0d0;">DownloadOptions</span>{<span style="color: #30d020;">Filepath</span>: filename}, statusChannel)
+
+<span style="color: #efefef;">done</span> := <span style="color: #30d020;">false</span>
+<span style="color: #efefef;">for</span> done != <span style="color: #30d020;">true</span> {
+    <span style="color: #efefef;">select</span> {
+    <span style="color: #efefef;">case</span> &lt;-ticker.C:
+        <span style="color: #efefef;">n</span>, <span style="color: #efefef;">unit</span> := <span style="color: #fdc04b;">getFormattedSize</span>(lastStatus.BytesDownloaded)
+        <span style="color: #efefef;">if</span> lastStatus.IsComplete == <span style="color: #30d020;">true</span> {
+            fmt.<span style="color: #fdc04b;">Printf</span>(<span style="color: #30d020;">"\x1B[1K\rcompleted: %.2f %s\n"</span>, n, unit)
+            done = <span style="color: #30d020;">true</span>
+            <span style="color: #efefef;">break</span>
+        }
+        <span style="color: #efefef;">if</span> lastStatus.Error != <span style="color: #30d020;">nil</span> {
+            fmt.<span style="color: #fdc04b;">Fprintf</span>(
+                os.Stderr,
+                <span style="color: #30d020;">"download failed: %s\n"</span>,
+                lastStatus.Error)
+            done = <span style="color: #30d020;">true</span>
+            <span style="color: #efefef;">break</span>
+        }
+        fmt.<span style="color: #fdc04b;">Printf</span>(<span style="color: #30d020;">"\x1B[1K\r%.2f %s"</span>, n, unit)
+    <span style="color: #efefef;">case</span> <span style="color: #efefef;">status</span> := &lt;-statusChannel:
+        lastStatus = status
+    }
+}
+</pre>
+</div>
+
+<p>
+The escape sequence in printf (<code>\x1B[1K</code>) deletes the current line and <code>\r</code> moves
+the cursor to the beginning of the line. <a href="https://www2.ccs.neu.edu/research/gpc/VonaUtils/vona/terminal/vtansi.htm">See more</a>
+</p>
+
+<p>
+This effectively shows us the updated progress by deleting the old progress
+every 500 ms
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org7c217c0" class="outline-2">
+<h2 id="org7c217c0">Conclusion</h2>
+<div class="outline-text-2" id="text-org7c217c0">
+<p>
+We've got ourselves a http(s) downloader using Golang's standard libraries only.
+The downloader shows progress as it downloads and saves the file with name as
+found looking at the url (or <code>download</code> if the url doesn't contain a
+<code>/resource_name.extension</code> part at the end
+</p>
+
+<p>
+There are many more things that can be done here. Some of the basic ones are
+</p>
+<ol class="org-ol">
+<li>Add multi connections to speed up downloads</li>
+<li>Add pause / resume capability</li>
+</ol>
+
+<p>
+Both of them requires the usage of response header <code>Accept-Range</code> which denotes
+whether the server supports requesting file data by a specific range. The
+corresponding request header is <code>Range</code> which can be added in the request to let
+the server know which range of data we need
+</p>
+
+<p>
+I'll pick this up in the next iteration of <code>Accio</code> our very own http downloader.
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>
