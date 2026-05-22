@@ -6,10 +6,8 @@
 <!-- 2026-05-22 Fri 16:53 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>rxrj</title>
+<title>Creating posts, understanding Zola</title>
 <meta name="author" content="Rituraj Borpujari" />
-<meta name="description" content="The ongoing development journal of Rituraj Borpujari covering
-systems programming, networking, Linux, distributed systems, and game mechanics." />
 <meta name="generator" content="Org Mode" />
 <style type="text/css">
   #content { max-width: 60em; margin: auto; }
@@ -198,65 +196,76 @@ systems programming, networking, Linux, distributed systems, and game mechanics.
 <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
+<div id="preamble" class="status">
+<div class="site-nav"><a href="/">Home</a></div>
+</div>
 <div id="content" class="content">
-<h1 class="title">rxrj
+<h1 class="title">Creating posts, understanding Zola
 <br />
-<span class="subtitle">Devlog of Rituraj Borpujari</span>
+<span class="subtitle">Understanding Zola static site generator</span>
 </h1>
-<div id="outline-container-orge77e8cd" class="outline-2">
-<h2 id="orge77e8cd">About</h2>
-<div class="outline-text-2" id="text-orge77e8cd">
 <p>
-Hi, I'm <b>Rituraj Borpujari</b>. I am a programmer interested in <b>Systems and Network
-programming</b>. I enjoy understanding how software works <i>beneath the abstractions</i>,
-and I spend a lot of time building things from scratch to explore those
-internals.
+Its been a day since I started working on my static blog with Zola. And frankly
+speaking, its been really simple. I've been following their onboarding guide
+from their website and here's what my structure looks like as of now.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">website-root/
+    templates/
+    content/
+    static/
+    themes/
+    config.toml
+</pre>
+</div>
+
+<p>
+This directory structure gets created when we run <code>zola init &lt;WEBSITE_ROOT&gt;</code>
 </p>
 
 <p>
-I also have a strong interest in <b>Game Mechanics</b>, especially <i>movemement systems</i>
-and <i>game-feel</i> in 2D platformers.
+There's the <code>templates</code> directory which is meant for HTML templates for the pages
+of the site. I have <code>base.html</code> which, as the name suggests, is the base template
+from which all other template would extend. The first one of which is the
+<code>index.html</code> file, which forms the main or landing page for my blog. And there's
+the <code>post.html</code> file which forms the template for the posts that I'm going to
+write on my blog (like this one). Then there also is <code>posts-page.html</code> which would
+contain the list of links to individual posts.
 </p>
 
 <p>
-Outside programming, I play video games (mostly <i>Minecraft</i> and Indie
-platformers), listen to music (<i>Led Zeppelin</i>, <i>Pink Floyd</i>, <i>The Doors</i>, <a href="https://en.wikipedia.org/wiki/Zubeen_Garg">Zubeen da</a>),
-and play guitar.
+The <code>content</code> directory would contain my actual data files. As of now, I've
+created a subdir inside it calling <code>posts</code>, which will contain all my blog
+posts. This subdirectory structure forms the basis of the web url / path. For
+example, the file for this post is in
+<code>&lt;WEBSITE_ROOT&gt;/content/posts/creating-posts-understanding-zola.md</code> which is why
+its address takes on the structure
+<code>&lt;WEBSITE_DOMAIN&gt;/posts/creating-posts-understanding-zola</code>.
 </p>
 
 <p>
-This site is my <i>ongoing development journal</i> - a place to document projects,
-experiments, and things I'm currently exploring. You can browse the <a href="#orgdb9c846">Devlog</a>
-section below, or follow updates through the RSS feed in the <a href="#orgf882fcf">Links</a> section.
+The other directories <code>themes</code> and <code>static</code> are currently empty as I've not reached
+the stage where I start applying themes and images to my site.
 </p>
-</div>
-</div>
-<div id="outline-container-orgf882fcf" class="outline-2">
-<h2 id="orgf882fcf">Links</h2>
-<div class="outline-text-2" id="text-orgf882fcf">
-<ul class="org-ul">
-<li><a href="https:github.com/riturajborpujari">Github Profile</a></li>
-<li><a href="https:www.linkedin.com/in/riturajborpujari">LinkedIn Profile</a></li>
-<li><a href="http:rss.xml">RSS Feed</a></li>
-</ul>
-</div>
-</div>
-<div id="outline-container-orgdb9c846" class="outline-2">
-<h2 id="orgdb9c846">Devlog</h2>
-<div class="outline-text-2" id="text-orgdb9c846">
-<ul class="org-ul">
-<li><span class="timestamp-wrapper"><span class="timestamp">[2026-05-14 Thu] </span></span> <a href="devlog/emacs-and-my-devlog.html">Emacs and my Devlog</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2025-07-23 Wed] </span></span> <a href="devlog/vim-better-sessions.html">Better sessions with VIM</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2025-03-14 Fri] </span></span> <a href="devlog/programming-high-perf-chat-app-in-c.html">Building Adda: A high performance group chat application in C</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2025-03-10 Mon] </span></span> <a href="devlog/building-a-downloader-in-go.html">Building a Downloader in Go</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2024-08-14 Wed] </span></span> <a href="devlog/competing-with-json-stringify.html">Competing with JSON.stringify</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2024-04-28 Sun] </span></span> <a href="devlog/terminal-tools-shell-aliases-and-directory-bookmarks.html">Terminal Tools, Shell Aliases, and directory bookmarks</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2024-04-11 Thu] </span></span> <a href="devlog/a-voice-of-my-own.html">A voice of my own</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2024-03-29 Fri] </span></span> <a href="devlog/creating-posts-understanding-zola.html">Creating posts, understanding Zola</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2024-03-28 Thu] </span></span> <a href="devlog/first-thoughts.html">First thoughts</a></li>
-</ul>
-</div>
-</div>
+
+<p>
+I've followed the guide for now and haven't changed much in my process. The
+content of the template files are, for example, pretty much the same as what is
+present in their guide. I've however changed the subdir <code>content/posts</code> from their
+guided <code>content/blog</code> for no apparent reason, other than my own instinct.
+</p>
+
+<p>
+I am, however, able to create posts like this one. Yeah its that simple. There
+is no design, no style; but its exactly what is is. A blog. Simple enough. And
+simple works for me now.
+</p>
+
+<p>
+Until next time,
+Cheers!
+</p>
 </div>
 </body>
 </html>

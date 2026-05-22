@@ -6,10 +6,8 @@
 <!-- 2026-05-22 Fri 16:53 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>rxrj</title>
+<title>Terminal Tools, Shell Aliases, and directory bookmarks</title>
 <meta name="author" content="Rituraj Borpujari" />
-<meta name="description" content="The ongoing development journal of Rituraj Borpujari covering
-systems programming, networking, Linux, distributed systems, and game mechanics." />
 <meta name="generator" content="Org Mode" />
 <style type="text/css">
   #content { max-width: 60em; margin: auto; }
@@ -198,63 +196,134 @@ systems programming, networking, Linux, distributed systems, and game mechanics.
 <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
+<div id="preamble" class="status">
+<div class="site-nav"><a href="/">Home</a></div>
+</div>
 <div id="content" class="content">
-<h1 class="title">rxrj
-<br />
-<span class="subtitle">Devlog of Rituraj Borpujari</span>
-</h1>
-<div id="outline-container-orge77e8cd" class="outline-2">
-<h2 id="orge77e8cd">About</h2>
-<div class="outline-text-2" id="text-orge77e8cd">
+<h1 class="title">Terminal Tools, Shell Aliases, and directory bookmarks</h1>
 <p>
-Hi, I'm <b>Rituraj Borpujari</b>. I am a programmer interested in <b>Systems and Network
-programming</b>. I enjoy understanding how software works <i>beneath the abstractions</i>,
-and I spend a lot of time building things from scratch to explore those
-internals.
+I like using terminal tools and programs. They are so handy that you can't
+ignore once you get used to them. There are many of them at your disposal, each
+doing something which is unique in their own.
 </p>
 
 <p>
-I also have a strong interest in <b>Game Mechanics</b>, especially <i>movemement systems</i>
-and <i>game-feel</i> in 2D platformers.
+They do their own thing best, and they work with each other. Take a look at
+[Unix Philosophy](<a href="https://en.wikipedia.org/wiki/Unix_philosophy">https://en.wikipedia.org/wiki/Unix_philosophy</a>) to understand
+the guiding principles that these tools follow to make them so easy to work
+with!
 </p>
 
 <p>
-Outside programming, I play video games (mostly <i>Minecraft</i> and Indie
-platformers), listen to music (<i>Led Zeppelin</i>, <i>Pink Floyd</i>, <i>The Doors</i>, <a href="https://en.wikipedia.org/wiki/Zubeen_Garg">Zubeen da</a>),
-and play guitar.
+As I begin using these tools and the many ways in which they allow
+[composability](<a href="https://en.wikipedia.org/wiki/Function_composition_(computer_science)">https://en.wikipedia.org/wiki/Function_composition_(computer_science)</a>),
+I found myself using such composed commands and even scripts. Here's one that
+allows me to move to frequently used directories without typing the path
+everytime, from any directory I'm in!
+</p>
+<div id="outline-container-org38e7da3" class="outline-2">
+<h2 id="org38e7da3">Directory bookmarks</h2>
+<div class="outline-text-2" id="text-org38e7da3">
+<p>
+We use <code>cd</code> a lot in terminal. It allows us to change to the directory we want to
+work on. As I started using [fzf](<a href="https://wiki.archlinux.org/title/fzf">https://wiki.archlinux.org/title/fzf</a>), finding
+a specific subdirectory became much more easier than before. I can type in <code>cd
+$(fzf)</code> and it will open up a search window where I can
+[fuzzy-search](<a href="https://en.wikipedia.org/wiki/Approximate_string_matching">https://en.wikipedia.org/wiki/Approximate_string_matching</a>) for a
+specific directory. I can write a shell alias like <code>alias cdf</code>"cd $(fzf)"= and
+then I can just type in <code>cdf</code> and press <code>return</code> to activate the command. Its great!
 </p>
 
 <p>
-This site is my <i>ongoing development journal</i> - a place to document projects,
-experiments, and things I'm currently exploring. You can browse the <a href="#orgdb9c846">Devlog</a>
-section below, or follow updates through the RSS feed in the <a href="#orgf882fcf">Links</a> section.
+But still, when I'm deep in a particular directory and I wanted to move to
+another directory which is not a sub dir this gives me a problem. Because the
+required directory that I want to move into is not a subdirectory, I can't just
+<code>cdf</code> any more (atleast not from the current dir). I have to move up the directory
+structure untill the required directory becomes a subdir to the present working
+directory. This is inadequate!
+</p>
+
+<p>
+What if I can store certain directories that I frequently <code>cd</code> into, somewhere in
+a file, and then use <code>fzf</code> to match and <code>cd</code> into whichever one I want. That would
+be awesome!
+</p>
+
+<p>
+That's what I built with <b><b><code>dmk</code> (directory bookmark)</b></b>. Its a set of two shell
+aliases to help me navigate to any directory with ease. From anywhere!!!
 </p>
 </div>
 </div>
-<div id="outline-container-orgf882fcf" class="outline-2">
-<h2 id="orgf882fcf">Links</h2>
-<div class="outline-text-2" id="text-orgf882fcf">
-<ul class="org-ul">
-<li><a href="https:github.com/riturajborpujari">Github Profile</a></li>
-<li><a href="https:www.linkedin.com/in/riturajborpujari">LinkedIn Profile</a></li>
-<li><a href="http:rss.xml">RSS Feed</a></li>
-</ul>
+<div id="outline-container-org3f25e32" class="outline-2">
+<h2 id="org3f25e32">Marking directories as bookmarks</h2>
+<div class="outline-text-2" id="text-org3f25e32">
+<p>
+First things first, I need a way to mark certain directories as important so
+that I can come back to them when needed. For this, I just need to save the
+directory path into a file.
+</p>
+
+<p>
+If I run the command <code>pwd &gt;&gt; ~/.dmks</code>, the present working directory path gets
+appended to a file called <code>.dmks</code> in my home directory <code>~</code>. Here, <code>pwd</code> command prints
+the present working directory to terminal, and <code>&gt;&gt;</code> causes that output to get
+appended to the filename provided after.
+</p>
+
+<p>
+For simpler frequent usage, I created an alias <code>alias dmk = "pwd &gt;&gt; ~/.dmks"</code> . I
+added this command into my shell init rc file <code>~/.bashrc</code> and the alias is
+available from any shell window I open next.
+</p>
 </div>
 </div>
-<div id="outline-container-orgdb9c846" class="outline-2">
-<h2 id="orgdb9c846">Devlog</h2>
-<div class="outline-text-2" id="text-orgdb9c846">
-<ul class="org-ul">
-<li><span class="timestamp-wrapper"><span class="timestamp">[2026-05-14 Thu] </span></span> <a href="devlog/emacs-and-my-devlog.html">Emacs and my Devlog</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2025-07-23 Wed] </span></span> <a href="devlog/vim-better-sessions.html">Better sessions with VIM</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2025-03-14 Fri] </span></span> <a href="devlog/programming-high-perf-chat-app-in-c.html">Building Adda: A high performance group chat application in C</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2025-03-10 Mon] </span></span> <a href="devlog/building-a-downloader-in-go.html">Building a Downloader in Go</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2024-08-14 Wed] </span></span> <a href="devlog/competing-with-json-stringify.html">Competing with JSON.stringify</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2024-04-28 Sun] </span></span> <a href="devlog/terminal-tools-shell-aliases-and-directory-bookmarks.html">Terminal Tools, Shell Aliases, and directory bookmarks</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2024-04-11 Thu] </span></span> <a href="devlog/a-voice-of-my-own.html">A voice of my own</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2024-03-29 Fri] </span></span> <a href="devlog/creating-posts-understanding-zola.html">Creating posts, understanding Zola</a></li>
-<li><span class="timestamp-wrapper"><span class="timestamp">[2024-03-28 Thu] </span></span> <a href="devlog/first-thoughts.html">First thoughts</a></li>
-</ul>
+<div id="outline-container-org0d350b9" class="outline-2">
+<h2 id="org0d350b9">Moving into a bookmarked directory</h2>
+<div class="outline-text-2" id="text-org0d350b9">
+<p>
+Okay, now that we have a way of marking directories by saving their path into a
+file, its time to use <code>fzf</code> to move into one.
+</p>
+
+<p>
+For this I run the command <code>cd $(cat ~/.dmks | fzf)</code>. This moves into the
+directory which is given by the <a href="https://en.wikiversity.org/wiki/Bash_programming/Subshells">sub-shell command</a> <code>cat ~/.dmks | fzf</code>. Whatever is
+the output of this sub-shell command gets used by <code>cd</code> and it will cause the
+change in working directory. It's key to note that, <code>cat ~/.dmks</code> prints the
+content of the file <code>~/.dmks</code> into the shell and because of the pipe operator <code>|</code> it
+gets passed on to <code>fzf</code>. This file has all of our marked directories which we
+marked with <code>dmk</code> and this list is passed on to FZF. FZF then shows an interactive
+search window, from which we can search the required directory from the list of
+marked directories and select the one we need.
+</p>
+
+<p>
+Again, to help simplify running this command regularly, I have created a shell
+alias for this too! <code>alias cdmk = "cd \$(cat ~/.dmks | fzf)"</code> creates an alias and
+I write this command in the shell rc file <code>~/.bashrc</code> to make it available in any
+new shell window as well.
+</p>
+
+<p>
+Note the escape character <code>\</code> is required before <code>$</code> when writing into the shell rc
+file! Otherwise, the shell will execute the command itself when initializing the
+alias! We don't want that! We want us to be able to use the alias, and when we
+do that, we need the command to run!
+</p>
+
+<p>
+That is that, and I get directory bookmark system available in any of my shell
+window!!! <code>dmk</code> and <code>cdmk</code>!!!
+</p>
+
+<p>
+P.S. here is the <a href="https://gist.github.com/riturajborpujari/096d8b704157a7ad3eb5f8237ba05b52">link to the gist containing the aliases</a>
+</p>
+
+<p>
+Cheers!
+</p>
 </div>
 </div>
 </div>

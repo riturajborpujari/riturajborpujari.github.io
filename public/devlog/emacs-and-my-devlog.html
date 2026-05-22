@@ -1,0 +1,662 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2026-05-22 Fri 16:53 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Emacs and my Devlog</title>
+<meta name="author" content="Rituraj Borpujari" />
+<meta name="description" content="How I used Emacs Org-mode to publish my devlog website with RSS feeds" />
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<div id="preamble" class="status">
+<div class="site-nav"><a href="/">Home</a></div>
+</div>
+<div id="content" class="content">
+<h1 class="title">Emacs and my Devlog
+<br />
+<span class="subtitle">An awesome meetup with Emacs Org-Mode</span>
+</h1>
+<div id="outline-container-org7f29ff2" class="outline-2">
+<h2 id="org7f29ff2">My introduction to Emacs</h2>
+<div class="outline-text-2" id="text-org7f29ff2">
+<p>
+I began using Emacs in between Vim since many months now. I love Vim for its
+fast Editing keybinds. Its my favorite in that regard. However, when I'm writing
+from scratch, Emacs feels a lot nicer.
+</p>
+
+<p>
+I love the fact that it can write and edit text without moving between different
+<i>modes</i>. I have some Emacs keybinds like <code>C-a</code>, <code>C-e</code>, <code>M-b</code>, <code>M-e</code> mapped in my Vim
+too. These works as expected in <i>Insert Mode</i> and <i>Command Mode</i>. So I use Emacs and
+Vim both, whichever I feel like at the moment.
+</p>
+
+<p>
+Now recently, I discovered something which made me rethink my Devlogging
+system. And I'm here three days afterward.
+</p>
+</div>
+</div>
+<div id="outline-container-org4595cfb" class="outline-2">
+<h2 id="org4595cfb">Emacs Org Mode</h2>
+<div class="outline-text-2" id="text-org4595cfb">
+<p>
+For people who are familiar with Markdown, Org mode can be thought of as a
+similar format.
+</p>
+
+<p>
+Its a simple formatting system that allows basic text styling like <b>bold</b>, <i>italic</i>,
+<span class="underline">underlined</span> etc. Links, code blocks, and Block Quotes are supported too. No
+big-deal here.
+</p>
+
+<p>
+There are certain quirks to remember when coming from Markdown based system. For
+example,
+</p>
+
+<ol class="org-ol">
+<li>Code Blocks are written withing <code>#+begin_src &lt;LANG&gt;</code> and <code>#+end_src</code> instead of
+Markdown's <code>``` &lt;LANG&gt;</code> and <code>```</code>.</li>
+<li>Block Quotes are written similarly within <code>#+begin_quote</code> and <code>#+end_quote</code></li>
+<li>Links are written like <code>[[LINK_URL][LINK_DESC]]</code> instead of
+<code>[LINK_DESC](LINK_URL)]</code></li>
+<li>Similarly, the markers for inline code, bold, italic are <code>=</code>, <code>*</code>, and <code>/</code>
+respectively</li>
+</ol>
+
+<p>
+But, the big-difference comes in the tooling that is brought with Org-mode. Its
+available by default in Emacs (I'm using GNU Emacs), and it brings a plethora of
+features as is the like of Emacs packages.
+</p>
+</div>
+<div id="outline-container-org677f387" class="outline-3">
+<h3 id="org677f387">Quality of Life improvements</h3>
+<div class="outline-text-3" id="text-org677f387">
+<p>
+Ofcourse, if we want, we can hide the control characters to make the org files a
+bit more readable.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(setq-default org-hide-emphasis-markers nil)
+(setq-default org-hide-leading-stars nil)
+(setq-default org-hide-macro-markers nil)
+(setq-default org-hide-block-startup nil)
+(setq-default org-hide-drawer-startup nil)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org6cd00bd" class="outline-3">
+<h3 id="org6cd00bd">Multiple Export Options</h3>
+<div class="outline-text-3" id="text-org6cd00bd">
+<p>
+Emacs's comes with multiple publishing options for the notes you make with
+Org-mode. It can export to, (<i>among others</i>)
+</p>
+<ol class="org-ol">
+<li>HTML</li>
+<li>LaTeX</li>
+<li>PDF</li>
+</ol>
+
+<p>
+Now, we can do the same with Markdown as well. There are many programs available
+that can convert from Markdown to any of the aforementioned formats. Seriously,
+how can one forget <a href="https://pandoc.org/">Pandoc</a>, the swiss army knife of document conversions.
+</p>
+
+<p>
+But if someone's already using Emacs, then Org-mode is a good contender. And if
+we later change our mind, <b>Pandoc</b> supports <i>Org-mode</i> too, so we can convert our
+notes back to literally whatever format we want!
+</p>
+</div>
+</div>
+<div id="outline-container-org596cc4e" class="outline-3">
+<h3 id="org596cc4e">Endless Configurability</h3>
+<div class="outline-text-3" id="text-org596cc4e">
+<p>
+Since, the whole of Org mode is written in Elisp ofcourse, we can modify parts
+of it, or extend it any way. Assuming we can work with Elisp.
+</p>
+</div>
+</div>
+<div id="outline-container-org6f96d72" class="outline-3">
+<h3 id="org6f96d72">Publishing as HTML</h3>
+<div class="outline-text-3" id="text-org6f96d72">
+<p>
+The configuration we need to do at minimum to achieve <code>org</code> to <code>html</code> export is
+shown below, assuming our project is at <code>~/org</code> and we want our HTML files to be
+generated in <code>~/org/public</code> directory.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(setq org-publish-project-alist
+      '(
+        (<span style="color: #30d020;">"project-org"</span>
+         <span style="color: #fdc04b;">:base-directory</span> <span style="color: #30d020;">"~/org"</span>
+         <span style="color: #fdc04b;">:base-extension</span> <span style="color: #30d020;">"org"</span>
+         <span style="color: #fdc04b;">:publishing-directory</span> <span style="color: #30d020;">"~/org/public"</span>
+         <span style="color: #fdc04b;">:recursive</span> t
+         <span style="color: #fdc04b;">:publishing-function</span> org-html-publish-to-html)))
+</pre>
+</div>
+
+<p>
+Most of the fields are self-explanatory. The <i>publishing-function</i>
+<code>org-html-publish-to-html</code> ensures, the <i>org files</i> are converted to HTML.
+</p>
+
+<p>
+After this code piece is run, we can now publish our org files from <code>~/org</code> with
+the following command,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-elisp">(org-publish <span style="color: #30d020;">"project-org"</span> t)
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org58e55d9" class="outline-2">
+<h2 id="org58e55d9">My Devlog site</h2>
+<div class="outline-text-2" id="text-org58e55d9">
+<p>
+I dived in and setup a project so that I can publish my whole notes into a HTML
+Website, my Devlog.
+</p>
+
+<p>
+Let's organise a common structure for my org-file directory <code>~/docs/rxrj</code> which will
+then get replicated in my published site.
+</p>
+
+<p>
+Here is the structure I have on my system
+</p>
+<ol class="org-ol">
+<li><code>~/docs/rxrj</code> will contain the site files, think <code>index</code>, <code>about</code>, and possibly <code>contact
+   us</code></li>
+<li><code>~/docs/rxrj/devlog</code> will contain my devlog files.
+This is where we would put my devlog articles / posts.</li>
+</ol>
+
+<p>
+Now, we want a <b>Devlog</b> section which will contain links to all files in my
+<code>devlog</code> sub-directory in a sorted manner. Newer posts show up on top of the
+list. We can manually write, into index file (<code>~/docs/rxrj/index.org</code>), link to every
+posts we write on my devlog, but why not make that automatic.
+</p>
+
+<p>
+Here's the deal now, we write my <code>index.org</code> file normally. With whatever we want
+to add as we feel like. Links to <code>About</code>, <code>Contact Us</code> etc. The trick is we keep
+aside a section for <code>Devlog</code> in that page, and program my Elisp code to fill that
+section with the links to all the posts in my <code>~/docs/rxrj/devlog</code> subdirectory sorted
+by the <code>Date</code> we wrote them.
+</p>
+
+<p>
+First, we define a function that can generate a list of all the <code>.org</code> files in
+my <code>~/docs/rxrj/devlog</code> subdir. Each entry in the list would contain the files' <i>Title</i>,
+<i>Date</i>, and <i>Path</i>. Also, this function sorts the devlog articles in
+reverse-chronological order, so newer articles show up first in the list.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #efefef;">defun</span> <span style="color: #fdc04b;">rxrj-get-org-entries</span> (org-project-dir org-file-dir)
+  (interactive)
+  (<span style="color: #efefef;">let*</span> ((files (directory-files org-file-dir t <span style="color: #30d020;">"\\.org$"</span>))
+       (entries '()))
+    (<span style="color: #efefef;">dolist</span> (file files)
+      (<span style="color: #efefef;">with-temp-buffer</span>
+        (insert-file-contents file)
+        (org-mode)
+        (<span style="color: #efefef;">let</span>
+            ((title (cadr (assoc <span style="color: #30d020;">"TITLE"</span> (org-collect-keywords '(<span style="color: #30d020;">"TITLE"</span>)))))
+             (date (cadr (assoc <span style="color: #30d020;">"DATE"</span> (org-collect-keywords '(<span style="color: #30d020;">"DATE"</span>))))))
+          (push
+           (list <span style="color: #fdc04b;">:date</span> date <span style="color: #fdc04b;">:title</span> title <span style="color: #fdc04b;">:path</span> (file-relative-name file org-project-dir))
+           entries))))
+    (sort entries
+          (<span style="color: #efefef;">lambda</span> (a b)
+            (string&gt;
+             (plist-get a <span style="color: #fdc04b;">:date</span>)
+             (plist-get b <span style="color: #fdc04b;">:date</span>))))))  
+</pre>
+</div>
+
+<p>
+Now we define a function which can format these entries as <i>Org Links</i>
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #efefef;">defun</span> <span style="color: #fdc04b;">rxrj-format-org-entries-as-links</span> (entries)
+(mapcar
+ (<span style="color: #efefef;">lambda</span> (entry)
+     (format <span style="color: #30d020;">"- %s [[file:%s][%s]]"</span>
+             (plist-get entry <span style="color: #fdc04b;">:date</span>)
+             (plist-get entry <span style="color: #fdc04b;">:path</span>)
+             (plist-get entry <span style="color: #fdc04b;">:title</span>)))
+ entries))
+</pre>
+</div>
+
+<p>
+The links in my index file would look like <code>- [Date] [LINK]</code>
+</p>
+
+<p>
+Now we combine the two above in another function which modifies my <code>index.org</code>
+page by adding the links into the <code>Devlog</code> section
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #efefef;">defun</span> <span style="color: #fdc04b;">rxrj-generate-subdir-index</span> (project-dir subdir index-section-identifier)
+(interactive)
+(<span style="color: #efefef;">let*</span> ((entry-links
+          (rxrj-format-org-entries-as-links
+           (rxrj-get-org-entries project-dir subdir)))
+         (index-file (expand-file-name <span style="color: #30d020;">"index.org"</span> project-dir)))
+  (<span style="color: #efefef;">with-temp-buffer</span>
+      (org-mode)
+    (insert-file-contents index-file)
+    (goto-char (point-min))
+    (re-search-forward index-section-identifier)
+    (<span style="color: #efefef;">let</span> ((beg (point))
+            (end (save-excursion (org-end-of-subtree t t) (point))))
+        (delete-region beg end))
+    (insert (mapconcat #'identity entry-links <span style="color: #30d020;">"\n"</span>))
+    (write-file index-file))))
+</pre>
+</div>
+
+<p>
+This will generate the entries for the provided <code>subdir</code> inside provided
+<code>project-dir</code>, format them as links using the two functions defined above. After
+that, it will open the <code>index.org</code> file in the <code>project-dir</code>, search for the section
+using <code>index-section-identifier</code>, and replace that section's contents with the
+formatted links.
+</p>
+
+<p>
+And we can call this function like
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(rxrj-generate-subdir-index <span style="color: #30d020;">"~/docs/rxrj"</span> <span style="color: #30d020;">"~/docs/rxrj/devlog"</span> <span style="color: #30d020;">"^\\* Devlog\n"</span>)
+</pre>
+</div>
+</div>
+<div id="outline-container-org2dfdb82" class="outline-3">
+<h3 id="org2dfdb82">Static Files</h3>
+<div class="outline-text-3" id="text-org2dfdb82">
+<p>
+Now for my static files (<code>css</code>, <code>jpeg</code>, <code>png</code> etc) which are in their own directory
+<code>~/docs/rxrj/static</code>, here's how I added another item to the
+<code>org-publish-project-alist</code> to handle that.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-elisp">(<span style="color: #30d020;">"rxrj-static"</span>
+ <span style="color: #fdc04b;">:base-directory</span> <span style="color: #30d020;">"~/docs/rxrj/static"</span>
+ <span style="color: #fdc04b;">:base-extension</span> <span style="color: #30d020;">"css</span><span style="color: #30d020; font-weight: bold;">\\</span><span style="color: #30d020; font-weight: bold;">|</span><span style="color: #30d020; font-weight: bold;">\\</span><span style="color: #30d020; font-weight: bold;">|</span><span style="color: #30d020;">png</span><span style="color: #30d020; font-weight: bold;">\\</span><span style="color: #30d020; font-weight: bold;">|</span><span style="color: #30d020;">jpg</span><span style="color: #30d020; font-weight: bold;">\\</span><span style="color: #30d020; font-weight: bold;">|</span><span style="color: #30d020;">jpeg</span><span style="color: #30d020; font-weight: bold;">\\</span><span style="color: #30d020; font-weight: bold;">|</span><span style="color: #30d020;">gif"</span>
+ <span style="color: #fdc04b;">:publishing-directory</span> <span style="color: #30d020;">"~/docs/rxrj/public/static"</span>
+ <span style="color: #fdc04b;">:recursive</span> t
+ <span style="color: #fdc04b;">:publishing-function</span> org-publish-attachment)
+</pre>
+</div>
+
+<p>
+In this case, we don't want any kind of processing done to the static assets, so
+a basic copying function <code>org-publish-attachment</code> is provided to <i>publishing-function</i>.
+</p>
+</div>
+</div>
+<div id="outline-container-org42d45da" class="outline-3">
+<h3 id="org42d45da">RSS Feed</h3>
+<div class="outline-text-3" id="text-org42d45da">
+<p>
+A Devlog site would be incomplete without it incorporating the RSS feed
+url. Most readers won't like to visit sites to get articles. Email based
+delivery is the worst, as it requires reader to provide their email address.
+</p>
+
+<p>
+But RSS Feed on the other hand is awesome. Readers user their Feed Reader to hit
+the site's RSS URL, and gets all of the updates it is interested in. Only the
+provider (Devlog site) has its url public, not the Reader's email.
+</p>
+
+<p>
+I used a package called <a href="https://git.sr.ht/~taingram/org-publish-rss/">org-publish-rss</a> to generate RSS feeds of my site. Since
+I want the feed to contain updates of only the articles I post (<i>fils inside my
+devlog dir</i>), i updated the project structure yet again to separate out devlog
+pages, and root directory pages.
+</p>
+
+<p>
+The configuration for publishing the <code>devlog</code> pages would also contain the RSS
+feed generation config. It looks like
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #30d020;">"rxrj-devlog"</span>
+ <span style="color: #fdc04b;">:base-directory</span> <span style="color: #30d020;">"~/docs/rxrj/devlog"</span>
+ <span style="color: #fdc04b;">:base-extension</span> <span style="color: #30d020;">"org"</span>
+ <span style="color: #fdc04b;">:publishing-directory</span> <span style="color: #30d020;">"~/docs/rxrj/public/devlog"</span>
+ <span style="color: #fdc04b;">:recursive</span> t
+ <span style="color: #fdc04b;">:publishing-function</span> org-html-publish-to-html
+ <span style="color: #fdc04b;">:headline-levels</span> 4
+ <span style="color: #fdc04b;">:auto-preamble</span> f
+
+ <span style="color: #fdc04b;">:auto-rss</span> t
+ <span style="color: #fdc04b;">:rss-title</span> <span style="color: #30d020;">"rxrj"</span>
+ <span style="color: #fdc04b;">:rss-link</span> <span style="color: #30d020;">"https://riturajb.dev"</span>
+ <span style="color: #fdc04b;">:rss-description</span> <span style="color: #30d020;">"Devlog of Rituraj Borpujari"</span>
+ <span style="color: #fdc04b;">:rss-with-content</span> all
+ <span style="color: #fdc04b;">:completion-function</span> org-publish-rss)
+</pre>
+</div>
+
+<p>
+The <code>:completion-function org-publish-rss</code> part says - after the
+<code>publishing-function</code> is run (<code>org-html-publish-to-html</code>), the next function to run
+is <code>org-publish-rss</code>, which takes care of generating the <code>rss.xml</code> file.
+</p>
+
+<p>
+Other properties are self-explanatory.
+</p>
+
+<p>
+Also, I would need another project config to copy the <code>rss.xml</code> file, which would
+be similar to how <i>static</i> files are handled.
+</p>
+
+<p>
+This would look like,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #30d020;">"rxrj-rss"</span>
+ <span style="color: #fdc04b;">:base-directory</span> <span style="color: #30d020;">"~/docs/rxrj/devlog"</span>
+ <span style="color: #fdc04b;">:base-extension</span> <span style="color: #30d020;">"xml"</span>
+ <span style="color: #fdc04b;">:publishing-directory</span> <span style="color: #30d020;">"~/docs/rxrj/public"</span>
+ <span style="color: #fdc04b;">:include</span> (<span style="color: #30d020;">"rss.xml"</span>)
+ <span style="color: #fdc04b;">:publishing-function</span> org-publish-attachment)
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org225f9ce" class="outline-2">
+<h2 id="org225f9ce">All together now</h2>
+<div class="outline-text-2" id="text-org225f9ce">
+<p>
+Now to stitch the whole thing together here's what I need to do
+</p>
+
+<ol class="org-ol">
+<li>Generate Index entries for <code>devlog</code> subdir</li>
+<li>Modify index file to add the generated entries in <code>Devlog</code> section</li>
+<li>Use <code>org-publish</code> to publish <code>devlog</code>, <code>static files</code>, and <code>rss.xml</code> file</li>
+</ol>
+
+<p>
+For <i>Step #3</i>, that I added another project config, <code>rxrj</code> which has just one purpose -
+contain the other project configs.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #30d020;">"rxrj"</span>
+ <span style="color: #fdc04b;">:components</span> (
+              <span style="color: #30d020;">"rxrj-devlog"</span>
+              <span style="color: #30d020;">"rxrj-index"</span>
+              <span style="color: #30d020;">"rxrj-static"</span>
+              <span style="color: #30d020;">"rxrj-rss"</span>
+              <span style="color: #30d020;">"rxrj-cname"</span>))
+</pre>
+</div>
+
+<p>
+For <i>Step #1</i>, and <i>Step #2</i> we already have a combined function
+<code>rxrj-generate-subdir-index</code>.
+</p>
+
+<p>
+Stitching the whole thing together, we would now have
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #efefef;">defun</span> <span style="color: #fdc04b;">rxrj-publish</span> ()
+  (interactive)
+  (rxrj-generate-subdir-index <span style="color: #30d020;">"~/docs/rxrj"</span> <span style="color: #30d020;">"~/docs/rxrj/devlog"</span> <span style="color: #30d020;">"^\\* Devlog\n"</span>)
+  (org-publish <span style="color: #30d020;">"rxrj"</span> t))
+</pre>
+</div>
+<p>
+This single function does the whole steps and publishes the site, containing all
+the articles and the generated index page.
+</p>
+
+<p>
+The whole code can be viewed in <a href="https://github.com/riturajborpujari/dotfiles/blob/master/.emacs.d/lisp/rxrj.el">here</a>, in my Github repo.
+</p>
+</div>
+</div>
+<div id="outline-container-orgd077275" class="outline-2">
+<h2 id="orgd077275">Future Improvements</h2>
+<div class="outline-text-2" id="text-orgd077275">
+<p>
+I would, in near future, want to make the RSS feed generation a bit more
+controlled, so that it generates only a fixed number of articles in the file.
+</p>
+
+<p>
+Similarly the index file should also contain only a fixed number of devlog
+links. The whole list should be hidden away in another page.
+</p>
+
+<p>
+But I don't have much pages now. For now, I have the Site generator ready to
+use. <b>Powered by Emacs, with Org-mode</b>
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

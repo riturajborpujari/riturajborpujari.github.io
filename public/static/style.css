@@ -1,0 +1,33 @@
+* {
+	box-sizing: border-box;
+}
+
+html {
+	background-color: #181818;
+	color: #e0e0e0;
+	font-size: 16pt;
+}
+
+body {
+	margin: 16px;
+}
+
+pre {
+	background-color: #161616;
+	border: 1px solid #444444;
+	font-size: 1em;
+}
+
+code {
+	color: #f5c04b;
+	font-size: 1em;
+}
+
+a {
+	color: #65afff;
+}
+
+.site-nav {
+	margin: 0 auto;
+	max-width: 60em;
+}

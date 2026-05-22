@@ -1,0 +1,1867 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+ xmlns:content="http://purl.org/rss/1.0/modules/content/"
+ xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+ xmlns:dc="http://purl.org/dc/elements/1.1/"
+ xmlns:atom="http://www.w3.org/2005/Atom"
+ xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+ xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+ xmlns:georss="http://www.georss.org/georss"
+ xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
+ xmlns:media="http://search.yahoo.com/mrss/">
+<channel>
+<atom:link href="/rss.xml" rel="self" type="application/rss+xml" />
+<title>rxrj</title>
+<link>https://riturajb.dev</link>
+<description><![CDATA[Devlog of Rituraj Borpujari]]></description>
+<language>en</language>
+<lastBuildDate>Fri, 22 May 2026 16:53:10 +0530</lastBuildDate>
+<generator>Emacs 30.2 org-publish-rss.el 0.8</generator>
+<item>
+<title>Building Adda: A high performance group chat application in C</title>
+<link>/programming-high-perf-chat-app-in-c.html</link>
+<pubDate>Fri, 14 Mar 2025 00:00:00 +0530</pubDate>
+<guid>/programming-high-perf-chat-app-in-c.html</guid>
+<description>
+<![CDATA[<p>
+Learning Network programming and creating a multi-user single-group chat
+application with C standard library. Uses Posix threads and IO Multiplexing to
+handle thousands of users simulataneously with very minimal resource usage.
+</p>
+<div id="outline-container-org736d258" class="outline-2">
+<h2 id="org736d258">Introduction</h2>
+<div class="outline-text-2" id="text-org736d258">
+<p>
+I don't use C at my work but I do occasionally get back to this fantastic
+language. Some time back I developed a Terminal alias to <a href="/file:///posts/terminal-tools-shell-aliases-directory-bookmarks/">manage my directory
+bookmarks and allow faster navigation</a> using <code>fzf</code>.
+</p>
+
+<p>
+I was intrigued by the Unix Philosophy and its overall design.So I began looking
+at different syscalls Linux provides and understanding some of them. I even
+tried out building C programs to replicate behaviours of everyday programs like
+<code>cat</code>, <code>cp</code> etc.
+</p>
+
+<p>
+Then I came to a domain which I have never touched in C before: Network
+Programming. I was kind of scared of that to be honest. But nevertheless I loved
+Network programming. I am, after all, a Web Developer who builds and maintains
+Web APIs.
+</p>
+</div>
+</div>
+<div id="outline-container-orga26f5b8" class="outline-2">
+<h2 id="orga26f5b8">Building it out</h2>
+<div class="outline-text-2" id="text-orga26f5b8">
+<p>
+But I wanted to try it out now. I have a copy of <a href="https://en.wikipedia.org/wiki/UNIX_Network_Programming">Unix Network Programming</a> and I
+referenced that for most parts. But I frequently used Man pages as it helped me
+look up things faster once I know the name of the function
+</p>
+
+<p>
+Working my way forward with the book and man pages, I was able to create a
+socket, <code>bind</code> it to address <code>0.0.0.0</code> (any IP on my local machine) with a specified
+port and <code>listen</code> to it. The <b><b>network ordering</b></b> of addresses and ports required
+some read up and I implemented the order conversion functionality myself before
+I actually stumbled upon <code>htonl</code>, and <code>htons</code> macros.
+</p>
+
+<p>
+With that out of the way, I was able to create a server which listens on a port
+for TCP connections, accept's the first one and echoes whatever data the client
+sends to it. For client program, I still relied on NodeJs.
+</p>
+</div>
+</div>
+<div id="outline-container-org28f0754" class="outline-2">
+<h2 id="org28f0754">Concurrency and IO Multiplexing</h2>
+<div class="outline-text-2" id="text-org28f0754">
+<p>
+One thing I really like about the man pages is that every page had a little <code>SEE
+ALSO</code> section at the end. Without that I wouldn't have found <code>select</code> function.
+<code>select</code> led me to <code>poll</code> and soon I enhanced my echo server to use IO Multiplexing
+to support multiple clients concurrently, all with a single thread.  I later saw
+this in the book which explained concepts in detail.
+</p>
+
+<p>
+Now I started forwarding messages from one client to all others and I've got a
+bare-bones chat server instead of a concurrent echo server. Whenever one client
+is ready with some data to be read, (as <code>poll</code> tells me this) I can then loop over
+all the clients again and forward the message (<code>write</code>) it to all
+</p>
+
+<p>
+The <code>poll</code> method only polls on the valid file descriptors of the client sockets
+provided. Any invalid descriptor (<i>negative value</i>) would be ignored. This helped
+me immensely. Since I could have a list of fds stored on the stack itself and
+when a client disconnects, I just simply set the relevant fd in the list as
+<code>-2</code>. The message writing logic then can simply skip over all the client fds in
+the list which have value as <code>-2</code>
+</p>
+</div>
+</div>
+<div id="outline-container-orgbd3751f" class="outline-2">
+<h2 id="orgbd3751f">Performance and Threading</h2>
+<div class="outline-text-2" id="text-orgbd3751f">
+<p>
+Now all of this is great, but the performance is a bit slower. Handling 2000
+concurrent connections takes a bit more time than expected. Time to employ
+threading.
+</p>
+
+<p>
+I referred back to the book and found <a href="https://en.wikipedia.org/wiki/Pthreads">Posix Threads</a>. After trying it out, I laid
+out my design like this
+</p>
+<ol class="org-ol">
+<li>main thread to poll for new connections</li>
+<li><code>message_reader</code> thread to poll for messages from clients</li>
+<li><code>message_writer</code> thread to write available messages to all clients (<i>except the
+author</i>)</li>
+</ol>
+
+<p>
+I reused the same list of fds I used to poll in both <b>message<sub>reader</sub></b> as well
+<b>message<sub>writer</sub></b> to let both the threads know the list of clients. main thread
+would accept new connections and add it in this list itself.
+</p>
+
+<p>
+The remaining part was to find a way to transfer messages from reader to writer.
+I used another file to act as a channel for the messages. That way I don't need
+to handle locks and can also poll on the channel file in <b>message<sub>writer</sub></b>
+</p>
+
+<p>
+So the <b>message<sub>reader</sub></b> thread would poll on the clients for data to be read, and
+once available it would read and write it just to the channel file. A single
+write operation per read message while iterating over messages to be read from
+all clients meant that the server could now read faster.
+</p>
+
+<p>
+On the other hand, <b>message<sub>writer</sub></b> would poll only on the channel file, and once
+data is available it would read it and write it to all clients in the list.  The
+ordering of messages is also preserved this way. The message read first is the
+message that is forwarded first to all clients
+</p>
+
+<p>
+This is great. The message throughput increased significantly and I was happy.
+But I soon saw a peculiar thing. Even for zero clients, the cpu usage was pretty
+high. I had not enabled Non-Blocking IO on any file descriptor so `poll` should
+block until data is available on the provided fds. And since reader has a list
+of zero fds, it is out of the question. It is configured to use poll with a
+timeout of 500 ms so as it uses the latest list of fds everytime, but that
+should not bring the CPU usage to much higher numbers.
+</p>
+
+<p>
+Its obvious that <b>message<sub>writer</sub></b> is to blame. And I found out the <code>poll</code> function
+is returning immediately for the channel file saying it has data to be read
+(<code>POLLIN</code> event is being raised). But the subsequent <code>read</code> returned zero bytes. So
+it looped over the poll-read logic continuously. This is causing the high CPU
+usage. I looked into man page of <code>poll</code> for info and I found out the thing I
+skipped earlier.
+</p>
+
+<blockquote>
+<p>
+Being <i>"ready"</i> means that the requested operation will not block; thus, poll()ing
+regular files, block devices, and other files with no reasonable polling
+semantic always returns instantly as ready to read and write
+</p>
+</blockquote>
+
+<p>
+Okay so using a channel file is not possible. After reading about Unix Sockets
+(sockets for Interprocess communication) I came to this amazing function
+<code>socketpair</code>. It creates a pair of sockets which are connected to each other.  So,
+data written to any of them is available on the other. <b>Perfect!</b>
+</p>
+
+<p>
+I updated my channel file logic to use channel socket pairs and soon everything
+came back to normal. CPU Usage is <code>Zero</code> for zero clients and it also increased
+predictively now as the number of clients increased
+</p>
+</div>
+</div>
+<div id="outline-container-org8e1aee7" class="outline-2">
+<h2 id="org8e1aee7">Benchmarks</h2>
+<div class="outline-text-2" id="text-org8e1aee7">
+<p>
+The program acheives the following benchmark result on my local machine
+</p>
+
+<ul class="org-ul">
+<li><b>CPU</b>: Ryzen 3700x (8 cores 8 threads)</li>
+<li><b>RAM</b>: 16GB</li>
+<li><b>Message length</b>: 211 bytes</li>
+</ul>
+
+<p>
+Note: CPU usage is divided by the number of cores (<code>top</code> - <i>Iris Mode off</i>)
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+
+<col  class="org-right" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">Number of Clients</th>
+<th scope="col" class="org-right">CPU Usage</th>
+<th scope="col" class="org-left">RAM Usage</th>
+<th scope="col" class="org-left">1M messages write</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">0</td>
+<td class="org-right">0</td>
+<td class="org-left">1.6m</td>
+<td class="org-left">NA</td>
+</tr>
+
+<tr>
+<td class="org-right">500</td>
+<td class="org-right">1.3%</td>
+<td class="org-left">1.6m</td>
+<td class="org-left">~4 seconds</td>
+</tr>
+
+<tr>
+<td class="org-right">1000</td>
+<td class="org-right">4.9%</td>
+<td class="org-left">1.6m</td>
+<td class="org-left">~1.3 seconds</td>
+</tr>
+
+<tr>
+<td class="org-right">2000</td>
+<td class="org-right">5.6%</td>
+<td class="org-left">1.6m</td>
+<td class="org-left">~0.9 seconds</td>
+</tr>
+
+<tr>
+<td class="org-right">4000</td>
+<td class="org-right">5.3%</td>
+<td class="org-left">1.7m</td>
+<td class="org-left">~1.5 seconds</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-org15224c0" class="outline-2">
+<h2 id="org15224c0">Conclusion</h2>
+<div class="outline-text-2" id="text-org15224c0">
+<p>
+The server is working fine now. Obviously this is not ready for production usage
+as it would have to be inspected for error scenarios, edge cases and security
+considerations. And its feature list is still at the beginning.
+</p>
+
+<p>
+I named it <b><b>Adda</b></b> a word popular in Assamese and many other languages in India,
+which roughly translates <i>to hang out / chat with a group of friends</i>
+</p>
+
+<p>
+This was built as a fun project and I enjoyed building this and learned a lot
+about Network Programming and also C in general.
+</p>
+
+<p>
+In future I would try to enhance this to allow command parsing and User
+authentication to help better suit the use case. For now, I am happy with what
+it is!
+</p>
+</div>
+</div>
+<div id="outline-container-org58f25d7" class="outline-2">
+<h2 id="org58f25d7">Project repository</h2>
+<div class="outline-text-2" id="text-org58f25d7">
+<p>
+The project repository is available on Github here at <a href="https://github.com/riturajborpujari/adda">Adda</a>
+</p>
+</div>
+</div>
+<div id="outline-container-orgf1c9c9c" class="outline-2">
+<h2 id="orgf1c9c9c">References</h2>
+<div class="outline-text-2" id="text-orgf1c9c9c">
+<ol class="org-ol">
+<li><a href="https://en.wikipedia.org/wiki/UNIX_Network_Programming">https://en.wikipedia.org/wiki/UNIX_Network_Programming</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Pthreads">https://en.wikipedia.org/wiki/Pthreads</a></li>
+<li><a href="https://www.man7.org/linux/man-pages/man1/top.1.html">https://www.man7.org/linux/man-pages/man1/top.1.html</a></li>
+</ol>
+</div>
+</div>
+]]>
+</description></item>
+<item>
+<title>Competing with JSON.stringify</title>
+<link>/competing-with-json-stringify.html</link>
+<pubDate>Wed, 14 Aug 2024 00:00:00 +0530</pubDate>
+<guid>/competing-with-json-stringify.html</guid>
+<description>
+<![CDATA[<p>
+This came up during a discussion with my friend about Recursion. Why not build a
+Javascript <code>JSON.stringify</code> method as a recursive programming exercise? Seems like
+a great idea.
+</p>
+<div id="outline-container-orgf5abe9e" class="outline-2">
+<h2 id="orgf5abe9e">The first draft</h2>
+<div class="outline-text-2" id="text-orgf5abe9e">
+<p>
+I quickly drafted out the first version. And it performed horribly! The <b><b>time
+required was about 4 times that of the standard</b></b> <code>JSON.stringify</code>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #efefef;">function</span> <span style="color: #fdc04b;">json_stringify</span>(<span style="color: #efefef;">obj</span>) {
+  <span style="color: #fdc04b;">if</span> (<span style="color: #efefef;">typeof</span> obj == <span style="color: #30d020;">"number"</span> || <span style="color: #efefef;">typeof</span> obj == <span style="color: #30d020;">"boolean"</span>) {
+    <span style="color: #efefef;">return</span> <span style="color: #fdc04b;">String</span>(obj);
+  }
+
+  <span style="color: #fdc04b;">if</span> (<span style="color: #efefef;">typeof</span> obj == <span style="color: #30d020;">"string"</span>) {
+    <span style="color: #efefef;">return</span> <span style="color: #30d020;">`"${obj}"`</span>;
+  }
+
+  <span style="color: #fdc04b;">if</span> (Array.<span style="color: #fdc04b;">isArray</span>(obj)) {
+    <span style="color: #efefef;">return</span> <span style="color: #30d020;">"["</span> + obj.<span style="color: #fdc04b;">map</span>(json_stringify).<span style="color: #fdc04b;">join</span>(<span style="color: #30d020;">","</span>) + <span style="color: #30d020;">"]"</span>;
+  }
+
+  <span style="color: #fdc04b;">if</span> (<span style="color: #efefef;">typeof</span> obj === <span style="color: #30d020;">"object"</span>) {
+    <span style="color: #efefef;">const</span> <span style="color: #efefef;">properties_str</span> = Object.<span style="color: #fdc04b;">entries</span>(obj)
+      .<span style="color: #fdc04b;">map</span>(([key, val]) =&gt; {
+        <span style="color: #efefef;">return</span> <span style="color: #30d020;">`"${key}":${json_stringify(val)}`</span>;
+      })
+      .<span style="color: #fdc04b;">join</span>(<span style="color: #30d020;">","</span>);
+    <span style="color: #efefef;">return</span> <span style="color: #30d020;">"{"</span> + properties_str + <span style="color: #30d020;">"}"</span>;
+  }
+}
+</pre>
+</div>
+
+<p>
+By running the following, we can see that our `json<sub>stringify</sub>` works as
+expected.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #efefef;">const</span> { assert } = <span style="color: #fdc04b;">require</span>(<span style="color: #30d020;">"console"</span>);
+<span style="color: #efefef;">const</span> <span style="color: #efefef;">test_obj</span> = {
+  name: <span style="color: #30d020;">"John Doe"</span>,
+  age: 23,
+  hobbies: [<span style="color: #30d020;">"football"</span>, <span style="color: #30d020;">"comet study"</span>]
+};
+
+<span style="color: #fdc04b;">assert</span>(<span style="color: #fdc04b;">json_stringify</span>(test_obj) === JSON.<span style="color: #fdc04b;">stringify</span>(test_obj))
+</pre>
+</div>
+
+<p>
+To test more scenarios, and multiple runs to get an average idea of how our 
+script runs, we made a simple testing script!
+</p>
+</div>
+</div>
+<div id="outline-container-orgaf048c1" class="outline-2">
+<h2 id="orgaf048c1">A simple testing script</h2>
+<div class="outline-text-2" id="text-orgaf048c1">
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #efefef;">function</span> <span style="color: #fdc04b;">validity_test</span>(<span style="color: #efefef;">fn1</span>, <span style="color: #efefef;">fn2</span>, <span style="color: #efefef;">test_values</span>) {
+  <span style="color: #fdc04b;">for</span> (<span style="color: #efefef;">const</span> <span style="color: #efefef;">test_value</span> <span style="color: #efefef;">of</span> test_values) {
+    <span style="color: #fdc04b;">assert</span>(<span style="color: #fdc04b;">fn1</span>(test_value) == <span style="color: #fdc04b;">fn2</span>(test_value));
+  }
+}
+
+<span style="color: #efefef;">function</span> <span style="color: #fdc04b;">time</span>(<span style="color: #efefef;">fn</span>, <span style="color: #efefef;">num_runs</span> = 1, ...<span style="color: #efefef;">args</span>) {
+  <span style="color: #efefef;">const</span> <span style="color: #efefef;">start_time</span> = Date.<span style="color: #fdc04b;">now</span>()
+
+  <span style="color: #fdc04b;">for</span> (<span style="color: #efefef;">let</span> <span style="color: #efefef;">i</span> = 0; i &lt; num_runs; i++) {
+    <span style="color: #fdc04b;">fn</span>(...args);
+  }
+
+  <span style="color: #efefef;">const</span> <span style="color: #efefef;">end_time</span> = Date.<span style="color: #fdc04b;">now</span>()
+  <span style="color: #efefef;">return</span> end_time - start_time
+}
+
+
+<span style="color: #efefef;">function</span> <span style="color: #fdc04b;">performance_test</span>(<span style="color: #efefef;">counts</span>) {
+  console.<span style="color: #fdc04b;">log</span>(<span style="color: #30d020;">"Starting performance test with"</span>, test_obj);
+
+  <span style="color: #fdc04b;">for</span> (<span style="color: #efefef;">const</span> <span style="color: #efefef;">count</span> <span style="color: #efefef;">of</span> counts) {
+    console.<span style="color: #fdc04b;">log</span>(<span style="color: #30d020;">"Testing"</span>, count, <span style="color: #30d020;">"times"</span>);
+
+    <span style="color: #efefef;">const</span> <span style="color: #efefef;">duration_std_json</span> = <span style="color: #fdc04b;">time</span>(JSON.stringify.<span style="color: #fdc04b;">bind</span>(JSON), count, test_obj);
+    console.<span style="color: #fdc04b;">log</span>(<span style="color: #30d020;">"\tStd lib JSON.stringify() took"</span>, duration_std_json, <span style="color: #30d020;">"ms"</span>);
+
+    <span style="color: #efefef;">const</span> <span style="color: #efefef;">duration_custom_json</span> = <span style="color: #fdc04b;">time</span>(json_stringify, count, test_obj);
+    console.<span style="color: #fdc04b;">log</span>(<span style="color: #30d020;">"\tCustom json_stringify() took"</span>, duration_custom_json, <span style="color: #30d020;">"ms"</span>);
+  }
+}
+
+<span style="color: #efefef;">const</span> <span style="color: #efefef;">test_obj</span> = {} <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">a deeply nested JS object, ommitted here for brevity 
+</span><span style="color: #efefef;">const</span> <span style="color: #efefef;">test_values</span> = [
+  12,
+  <span style="color: #30d020;">"string test"</span>,
+  [12, 34, 1],
+  [12, <span style="color: #30d020;">true</span>, 1, <span style="color: #30d020;">false</span>],
+  test_obj
+];
+
+<span style="color: #fdc04b;">validity_test</span>(JSON.stringify, json_stringify, test_values);
+<span style="color: #fdc04b;">performance_test</span>([1000, 10_000, 100_000, 1000_000]);
+</pre>
+</div>
+
+<p>
+Running this we get the timings like the following.
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">Testing 1000 times
+    Std lib JSON.stringify() took 5 ms
+    Custom json_stringify() took 20 ms
+Testing 10000 times
+    Std lib JSON.stringify() took 40 ms
+    Custom json_stringify() took 129 ms
+Testing 100000 times
+    Std lib JSON.stringify() took 388 ms
+    Custom json_stringify() took 1241 ms
+Testing 1000000 times
+    Std lib JSON.stringify() took 3823 ms
+    Custom json_stringify() took 12275 ms
+</pre>
+</div>
+
+
+<p>
+It might run differently on different systems but the ratio of the time taken 
+by std <code>JSON.strngify</code> to that of our custom <code>json_stringify</code> should be about 
+<b><b>1:3</b></b> - <b><b>1:4</b></b>
+</p>
+
+<p>
+It could be different too in an interesting case. Read on to know more about 
+that!
+</p>
+</div>
+</div>
+<div id="outline-container-org0963013" class="outline-2">
+<h2 id="org0963013">Improving performance</h2>
+<div class="outline-text-2" id="text-org0963013">
+<p>
+The first thing that could be fixed is the use of <code>map</code> function. It creates new
+array from the old one. In our case of objects, it is creating an array of JSON
+stringified object properties out of the array containing object entries.
+</p>
+
+<p>
+Similar thing is also happening with stringification of the array elements too.
+</p>
+
+<p>
+We have to loop over the elements in an array, or the entries of an object! But
+we can skip creating another array just to join the JSON stringified parts.
+</p>
+
+<p>
+Here's the updated version (only the changed parts shown for brevity)
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #efefef;">function</span> <span style="color: #fdc04b;">json_stringify</span>(<span style="color: #efefef;">val</span>) {
+  <span style="color: #fdc04b;">if</span> (<span style="color: #efefef;">typeof</span> val === <span style="color: #30d020;">"number"</span> || <span style="color: #efefef;">typeof</span> val === <span style="color: #30d020;">"boolean"</span>) {
+    <span style="color: #efefef;">return</span> <span style="color: #fdc04b;">String</span>(val);
+  }
+
+  <span style="color: #fdc04b;">if</span> (<span style="color: #efefef;">typeof</span> val === <span style="color: #30d020;">"string"</span>) {
+    <span style="color: #efefef;">return</span> <span style="color: #30d020;">`"${val}"`</span>;
+  }
+
+  <span style="color: #fdc04b;">if</span> (Array.<span style="color: #fdc04b;">isArray</span>(val)) {
+    <span style="color: #efefef;">let</span> <span style="color: #efefef;">elements_str</span> = <span style="color: #30d020;">"["</span>
+
+    <span style="color: #efefef;">let</span> <span style="color: #efefef;">sep</span> = <span style="color: #30d020;">""</span>
+    <span style="color: #fdc04b;">for</span> (<span style="color: #efefef;">const</span> <span style="color: #efefef;">element</span> <span style="color: #efefef;">of</span> val) {
+      elements_str += sep + <span style="color: #fdc04b;">json_stringify</span>(element)
+      sep = <span style="color: #30d020;">","</span>
+    }
+    elements_str += <span style="color: #30d020;">"]"</span>
+
+    <span style="color: #efefef;">return</span> elements_str
+  }
+
+  <span style="color: #fdc04b;">if</span> (<span style="color: #efefef;">typeof</span> val === <span style="color: #30d020;">"object"</span>) {
+    <span style="color: #efefef;">let</span> <span style="color: #efefef;">properties_str</span> = <span style="color: #30d020;">"{"</span>
+
+    <span style="color: #efefef;">let</span> <span style="color: #efefef;">sep</span> = <span style="color: #30d020;">""</span>
+    <span style="color: #fdc04b;">for</span> (<span style="color: #efefef;">const</span> <span style="color: #efefef;">key</span> <span style="color: #efefef;">in</span> val) {
+      properties_str += sep + <span style="color: #30d020;">`"${key}":${json_stringify(val[key])}`</span>
+      sep = <span style="color: #30d020;">","</span>
+    }
+    properties_str += <span style="color: #30d020;">"}"</span>
+
+    <span style="color: #efefef;">return</span> properties_str;
+  }
+}
+</pre>
+</div>
+
+<p>
+And here's the output of the test script now
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">Testing 1000 times
+        Std lib JSON.stringify() took 5 ms
+        Custom json_stringify() took 6 ms
+Testing 10000 times
+        Std lib JSON.stringify() took 40 ms
+        Custom json_stringify() took 43 ms
+Testing 100000 times
+        Std lib JSON.stringify() took 393 ms
+        Custom json_stringify() took 405 ms
+Testing 1000000 times
+        Std lib JSON.stringify() took 3888 ms
+        Custom json_stringify() took 3966 ms
+</pre>
+</div>
+
+<p>
+This looks a lot better now. Our custom <code>json_stringify</code> is taking only 3 ms more
+than <code>JSON.stringify</code> to stringify a deep nested object 10,000 times.  Although
+this is not perfect, it is an acceptable delay.
+</p>
+</div>
+</div>
+<div id="outline-container-orgbd688fc" class="outline-2">
+<h2 id="orgbd688fc">Squeezing out more??</h2>
+<div class="outline-text-2" id="text-orgbd688fc">
+<p>
+The current delay could be due to all the string creation and concatenation
+that's happening. Every time we run <code>elements_str +</code> sep +
+json<sub>stringify</sub>(element)= we are concatenating 3 strings.
+</p>
+
+<p>
+Concatenating strings is costly because it requires
+</p>
+<ol class="org-ol">
+<li>creating a new string buffer to fit the whole combined string</li>
+<li>copy individual strings to the newly created buffer</li>
+</ol>
+
+<p>
+By using a <code>Buffer</code> ourselves and writing the data directly there might give us a
+performance improvement. Since we can create a large buffer (say 80 characters)
+and then create new buffers to fit 80 characters more when it runs out.
+</p>
+
+<p>
+We won't be avoiding the reallocation / copying of data altogether, but we will
+reducing those operations.
+</p>
+
+<p>
+Another possible delay is the recursive process itself! Specifically the
+function call which takes up time. Consider our function call
+<code>json_stringify(val)</code> which just has one parameter.
+</p>
+</div>
+</div>
+<div id="outline-container-org82d212e" class="outline-2">
+<h2 id="org82d212e">Understanding Function calls</h2>
+<div class="outline-text-2" id="text-org82d212e">
+<p>
+The steps would be
+</p>
+<ol class="org-ol">
+<li>Push the return address to the stack</li>
+<li>push the argument reference to the stack</li>
+<li>In the called function
+<ol class="org-ol">
+<li>Pop the parameter reference from the stack</li>
+<li>Pop the return address from the stack</li>
+<li>push the return value (the stringified part) onto the stack</li>
+</ol></li>
+<li>In the calling function
+<ol class="org-ol">
+<li>Pop off the value returned by the function from the stack</li>
+</ol></li>
+</ol>
+
+<p>
+All these operations happen to ensure function calls happen and this adds CPU
+costs.
+</p>
+
+<p>
+If we create a non-recursive algorithm of <code>json_stringify</code> all these operations
+listed above for function call (times the number of such calls) would be reduced
+to none.
+</p>
+
+<p>
+This can be a future attempt.
+</p>
+</div>
+</div>
+<div id="outline-container-org86938f4" class="outline-2">
+<h2 id="org86938f4">NodeJs version differences</h2>
+<div class="outline-text-2" id="text-org86938f4">
+<p>
+One last thing to note here. Consider the following output of the test script
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">Testing 1000 times
+        Std lib JSON.stringify() took 8 ms
+        Custom json_stringify() took 8 ms
+Testing 10000 times
+        Std lib JSON.stringify() took 64 ms
+        Custom json_stringify() took 51 ms
+Testing 100000 times
+        Std lib JSON.stringify() took 636 ms
+        Custom json_stringify() took 467 ms
+Testing 1000000 times
+        Std lib JSON.stringify() took 6282 ms
+        Custom json_stringify() took 4526 ms
+</pre>
+</div>
+
+<p>
+Did our custom <code>json_stringify</code> just perform better than the NodeJs standard
+<code>JSON.stringify</code>???
+</p>
+
+<p>
+Well yes! But this is an older version of NodeJs (`v18.20.3`). Turns out, for
+this version (and lower also perhaps) our custom made `json<sub>stringify</sub>` works
+faster than the standard library one!
+</p>
+
+<p>
+All the tests for this article (except this last one) has been done with <b><b>Node
+v22.6.0</b></b>
+</p>
+
+<p>
+The performance of JSON.stringify has increased from v18 to v22. This is so
+great
+</p>
+
+<p>
+It is also important to note that, our script performed better in NodeJs v22.
+So, it means, NodeJs has increased the overall performance of the runtime too.
+Possibly an update has happened to the underlying <b><b>V8 engine</b></b> itself.
+</p>
+
+<p>
+Well, this has been an enjoyable experience for me. And I hope it will be for
+you too. And in the midst of all this enjoyment, we learnt a thing or two!
+</p>
+
+<p>
+Keep building, keep testing!
+</p>
+</div>
+</div>
+]]>
+</description></item>
+<item>
+<title>First thoughts</title>
+<link>/first-thoughts.html</link>
+<pubDate>Thu, 28 Mar 2024 00:00:00 +0530</pubDate>
+<guid>/first-thoughts.html</guid>
+<description>
+<![CDATA[<p>
+Okay, this is another of my attempt at creating a blog for myself. And this
+time, I'm using <a href="https://getzola.org">Zola</a>.
+</p>
+
+<p>
+I'm following their documentation at the website and it seems fairly simple,
+atleast up until now.
+</p>
+
+<p>
+Let the blog-building commence.
+Cheers!
+</p>
+]]>
+</description></item>
+<item>
+<title>Creating posts, understanding Zola</title>
+<link>/creating-posts-understanding-zola.html</link>
+<pubDate>Fri, 29 Mar 2024 00:00:00 +0530</pubDate>
+<guid>/creating-posts-understanding-zola.html</guid>
+<description>
+<![CDATA[<p>
+Its been a day since I started working on my static blog with Zola. And frankly
+speaking, its been really simple. I've been following their onboarding guide
+from their website and here's what my structure looks like as of now.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">website-root/
+    templates/
+    content/
+    static/
+    themes/
+    config.toml
+</pre>
+</div>
+
+<p>
+This directory structure gets created when we run <code>zola init &lt;WEBSITE_ROOT&gt;</code>
+</p>
+
+<p>
+There's the <code>templates</code> directory which is meant for HTML templates for the pages
+of the site. I have <code>base.html</code> which, as the name suggests, is the base template
+from which all other template would extend. The first one of which is the
+<code>index.html</code> file, which forms the main or landing page for my blog. And there's
+the <code>post.html</code> file which forms the template for the posts that I'm going to
+write on my blog (like this one). Then there also is <code>posts-page.html</code> which would
+contain the list of links to individual posts.
+</p>
+
+<p>
+The <code>content</code> directory would contain my actual data files. As of now, I've
+created a subdir inside it calling <code>posts</code>, which will contain all my blog
+posts. This subdirectory structure forms the basis of the web url / path. For
+example, the file for this post is in
+<code>&lt;WEBSITE_ROOT&gt;/content/posts/creating-posts-understanding-zola.md</code> which is why
+its address takes on the structure
+<code>&lt;WEBSITE_DOMAIN&gt;/posts/creating-posts-understanding-zola</code>.
+</p>
+
+<p>
+The other directories <code>themes</code> and <code>static</code> are currently empty as I've not reached
+the stage where I start applying themes and images to my site.
+</p>
+
+<p>
+I've followed the guide for now and haven't changed much in my process. The
+content of the template files are, for example, pretty much the same as what is
+present in their guide. I've however changed the subdir <code>content/posts</code> from their
+guided <code>content/blog</code> for no apparent reason, other than my own instinct.
+</p>
+
+<p>
+I am, however, able to create posts like this one. Yeah its that simple. There
+is no design, no style; but its exactly what is is. A blog. Simple enough. And
+simple works for me now.
+</p>
+
+<p>
+Until next time,
+Cheers!
+</p>
+]]>
+</description></item>
+<item>
+<title>A voice of my own</title>
+<link>/a-voice-of-my-own.html</link>
+<pubDate>Thu, 11 Apr 2024 00:00:00 +0530</pubDate>
+<guid>/a-voice-of-my-own.html</guid>
+<description>
+<![CDATA[<p>
+I got my blog published! I am so excited now. I have been writing on my local
+machine the last two posts, and after that I got busy in something or the other
+and my blog was getting less attention from me. But no more! I took some time
+out of my family and work commitments and finally published it.
+</p>
+
+<p>
+So, now may be a good time to tell you the intent behind it.
+</p>
+<div id="outline-container-orge8c06dc" class="outline-2">
+<h2 id="orge8c06dc">A blog of my experiences</h2>
+<div class="outline-text-2" id="text-orge8c06dc">
+<p>
+This will be a plain old simple blog of my experiences. I am a developer and
+love to use tools and technologies to ease my work and also, just to checkout
+something cool that people have built. This blog would be the share point of my
+experiences with software tools and products that I come by.
+</p>
+
+<p>
+I love reading about Open-Source products, and revolutionizing technologies,
+like the AT protocol, or the radicle tool for repository management, or even
+<a href="/creating-posts-understanding-zola">Zola to create this blog</a>. I love to interact with these tools and those
+interactions would eventually find their way here.
+</p>
+
+<p>
+Every now and then, we come across certain situations which help us understand
+life better. To find clarity about something. That clarity, about however small
+an aspect it might be, brings with it a certain sense of joy! And those
+experiences will, occasionally find their way here too!
+</p>
+
+<p>
+A blog of my experiences! Nothing more, nothing less!
+</p>
+</div>
+</div>
+<div id="outline-container-org4295fb0" class="outline-2">
+<h2 id="org4295fb0">No tracking, no paywall, no Ads!</h2>
+<div class="outline-text-2" id="text-org4295fb0">
+<p>
+This blog won't be something that I would ever need to sell! I am not doing this
+for a passive income either. This is just my voice and no one else's. And I
+would not want an ad to popup in my voice! Ads add clutter, and I prefer clean,
+concise posts!
+</p>
+
+<p>
+As it goes, I am not a fan of Paywall in articles. Sell a book, a course, but
+leave individual articles open for everyone to read! They are <i>not that good
+anyway</i> (this comment is just for my own posts though!)
+</p>
+
+<p>
+I don't need to track people coming to my blog site! There are no tracking
+cookies, no Google Analytics. The articles would not even have a share link!
+</p>
+</div>
+</div>
+<div id="outline-container-org3f5da3d" class="outline-2">
+<h2 id="org3f5da3d">Simple communication, no messy comment threads</h2>
+<div class="outline-text-2" id="text-org3f5da3d">
+<p>
+This blog aims to be simple. There are no like counters, no comment threads.
+Heck you can even use <a href="http:/rss.xml">the feed url</a> and you can read all articles in your
+favorite feed reader!
+</p>
+
+<p>
+You can connect with me on my social media handles. I am currently on <a href="https://twitter.com/thisisrituraj">Twitter</a>
+but I am trying out <a href="https://bsky.app/profile/riturajborpujari.bsky.social">Bluesky</a> too and might soon port there. You can also find me
+on my <a href="https://in.linkedin.com/in/riturajborpujari">LinkedIn profile</a>.
+</p>
+
+<p>
+I would be adding a contact form here on the site itself, but until then, I
+would love any feedback / suggestions on the social media sites itself.
+</p>
+</div>
+</div>
+<div id="outline-container-org4e88c14" class="outline-2">
+<h2 id="org4e88c14">Inspiration</h2>
+<div class="outline-text-2" id="text-org4e88c14">
+<p>
+Sometime back I found <a href="https://yosefk.com/blog/">Yosse Kreinin</a> through one of his articles on <a href="https://yosefk.com/blog/people-can-read-their-managers-mind.html">management
+and the process of valuing people's work</a>. It's a gread read.
+</p>
+
+<p>
+There are many more who write blogs this way, <a href="https://blog.codingmilitia.com">João Antunes's blog</a>, <a href="http://steve-yegge.blogspot.com/">Steve Yegge's
+blog</a>, <a href="https://rachelbythebay.com/w/">Rachel Kroll's blog</a> and many more. These people and the articles they post
+inspired me to write my own blog.
+</p>
+
+<p>
+I wish to be like them!
+</p>
+</div>
+</div>
+]]>
+</description></item>
+<item>
+<title>Emacs and my Devlog</title>
+<link>/emacs-and-my-devlog.html</link>
+<pubDate>Thu, 14 May 2026 00:00:00 +0530</pubDate>
+<guid>/emacs-and-my-devlog.html</guid>
+<description>
+<![CDATA[<div id="outline-container-orgb5583bf" class="outline-2">
+<h2 id="orgb5583bf">My introduction to Emacs</h2>
+<div class="outline-text-2" id="text-orgb5583bf">
+<p>
+I began using Emacs in between Vim since many months now. I love Vim for its
+fast Editing keybinds. Its my favorite in that regard. However, when I'm writing
+from scratch, Emacs feels a lot nicer.
+</p>
+
+<p>
+I love the fact that it can write and edit text without moving between different
+<i>modes</i>. I have some Emacs keybinds like <code>C-a</code>, <code>C-e</code>, <code>M-b</code>, <code>M-e</code> mapped in my Vim
+too. These works as expected in <i>Insert Mode</i> and <i>Command Mode</i>. So I use Emacs and
+Vim both, whichever I feel like at the moment.
+</p>
+
+<p>
+Now recently, I discovered something which made me rethink my Devlogging
+system. And I'm here three days afterward.
+</p>
+</div>
+</div>
+<div id="outline-container-orgd5d23e5" class="outline-2">
+<h2 id="orgd5d23e5">Emacs Org Mode</h2>
+<div class="outline-text-2" id="text-orgd5d23e5">
+<p>
+For people who are familiar with Markdown, Org mode can be thought of as a
+similar format.
+</p>
+
+<p>
+Its a simple formatting system that allows basic text styling like <b>bold</b>, <i>italic</i>,
+<span class="underline">underlined</span> etc. Links, code blocks, and Block Quotes are supported too. No
+big-deal here.
+</p>
+
+<p>
+There are certain quirks to remember when coming from Markdown based system. For
+example,
+</p>
+
+<ol class="org-ol">
+<li>Code Blocks are written withing <code>#+begin_src &lt;LANG&gt;</code> and <code>#+end_src</code> instead of
+Markdown's <code>``` &lt;LANG&gt;</code> and <code>```</code>.</li>
+<li>Block Quotes are written similarly within <code>#+begin_quote</code> and <code>#+end_quote</code></li>
+<li>Links are written like <code>[[LINK_URL][LINK_DESC]]</code> instead of
+<code>[LINK_DESC](LINK_URL)]</code></li>
+<li>Similarly, the markers for inline code, bold, italic are <code>=</code>, <code>*</code>, and <code>/</code>
+respectively</li>
+</ol>
+
+<p>
+But, the big-difference comes in the tooling that is brought with Org-mode. Its
+available by default in Emacs (I'm using GNU Emacs), and it brings a plethora of
+features as is the like of Emacs packages.
+</p>
+</div>
+<div id="outline-container-orgd213339" class="outline-3">
+<h3 id="orgd213339">Quality of Life improvements</h3>
+<div class="outline-text-3" id="text-orgd213339">
+<p>
+Ofcourse, if we want, we can hide the control characters to make the org files a
+bit more readable.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(setq-default org-hide-emphasis-markers nil)
+(setq-default org-hide-leading-stars nil)
+(setq-default org-hide-macro-markers nil)
+(setq-default org-hide-block-startup nil)
+(setq-default org-hide-drawer-startup nil)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org287f39c" class="outline-3">
+<h3 id="org287f39c">Multiple Export Options</h3>
+<div class="outline-text-3" id="text-org287f39c">
+<p>
+Emacs's comes with multiple publishing options for the notes you make with
+Org-mode. It can export to, (<i>among others</i>)
+</p>
+<ol class="org-ol">
+<li>HTML</li>
+<li>LaTeX</li>
+<li>PDF</li>
+</ol>
+
+<p>
+Now, we can do the same with Markdown as well. There are many programs available
+that can convert from Markdown to any of the aforementioned formats. Seriously,
+how can one forget <a href="https://pandoc.org/">Pandoc</a>, the swiss army knife of document conversions.
+</p>
+
+<p>
+But if someone's already using Emacs, then Org-mode is a good contender. And if
+we later change our mind, <b>Pandoc</b> supports <i>Org-mode</i> too, so we can convert our
+notes back to literally whatever format we want!
+</p>
+</div>
+</div>
+<div id="outline-container-org2f21544" class="outline-3">
+<h3 id="org2f21544">Endless Configurability</h3>
+<div class="outline-text-3" id="text-org2f21544">
+<p>
+Since, the whole of Org mode is written in Elisp ofcourse, we can modify parts
+of it, or extend it any way. Assuming we can work with Elisp.
+</p>
+</div>
+</div>
+<div id="outline-container-org4f6912c" class="outline-3">
+<h3 id="org4f6912c">Publishing as HTML</h3>
+<div class="outline-text-3" id="text-org4f6912c">
+<p>
+The configuration we need to do at minimum to achieve <code>org</code> to <code>html</code> export is
+shown below, assuming our project is at <code>~/org</code> and we want our HTML files to be
+generated in <code>~/org/public</code> directory.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(setq org-publish-project-alist
+      '(
+        (<span style="color: #30d020;">"project-org"</span>
+         <span style="color: #fdc04b;">:base-directory</span> <span style="color: #30d020;">"~/org"</span>
+         <span style="color: #fdc04b;">:base-extension</span> <span style="color: #30d020;">"org"</span>
+         <span style="color: #fdc04b;">:publishing-directory</span> <span style="color: #30d020;">"~/org/public"</span>
+         <span style="color: #fdc04b;">:recursive</span> t
+         <span style="color: #fdc04b;">:publishing-function</span> org-html-publish-to-html)))
+</pre>
+</div>
+
+<p>
+Most of the fields are self-explanatory. The <i>publishing-function</i>
+<code>org-html-publish-to-html</code> ensures, the <i>org files</i> are converted to HTML.
+</p>
+
+<p>
+After this code piece is run, we can now publish our org files from <code>~/org</code> with
+the following command,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-elisp">(org-publish <span style="color: #30d020;">"project-org"</span> t)
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org4b9502d" class="outline-2">
+<h2 id="org4b9502d">My Devlog site</h2>
+<div class="outline-text-2" id="text-org4b9502d">
+<p>
+I dived in and setup a project so that I can publish my whole notes into a HTML
+Website, my Devlog.
+</p>
+
+<p>
+Let's organise a common structure for my org-file directory <code>~/docs/rxrj</code> which will
+then get replicated in my published site.
+</p>
+
+<p>
+Here is the structure I have on my system
+</p>
+<ol class="org-ol">
+<li><code>~/docs/rxrj</code> will contain the site files, think <code>index</code>, <code>about</code>, and possibly <code>contact
+   us</code></li>
+<li><code>~/docs/rxrj/devlog</code> will contain my devlog files.
+This is where we would put my devlog articles / posts.</li>
+</ol>
+
+<p>
+Now, we want a <b>Devlog</b> section which will contain links to all files in my
+<code>devlog</code> sub-directory in a sorted manner. Newer posts show up on top of the
+list. We can manually write, into index file (<code>~/docs/rxrj/index.org</code>), link to every
+posts we write on my devlog, but why not make that automatic.
+</p>
+
+<p>
+Here's the deal now, we write my <code>index.org</code> file normally. With whatever we want
+to add as we feel like. Links to <code>About</code>, <code>Contact Us</code> etc. The trick is we keep
+aside a section for <code>Devlog</code> in that page, and program my Elisp code to fill that
+section with the links to all the posts in my <code>~/docs/rxrj/devlog</code> subdirectory sorted
+by the <code>Date</code> we wrote them.
+</p>
+
+<p>
+First, we define a function that can generate a list of all the <code>.org</code> files in
+my <code>~/docs/rxrj/devlog</code> subdir. Each entry in the list would contain the files' <i>Title</i>,
+<i>Date</i>, and <i>Path</i>. Also, this function sorts the devlog articles in
+reverse-chronological order, so newer articles show up first in the list.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #efefef;">defun</span> <span style="color: #fdc04b;">rxrj-get-org-entries</span> (org-project-dir org-file-dir)
+  (interactive)
+  (<span style="color: #efefef;">let*</span> ((files (directory-files org-file-dir t <span style="color: #30d020;">"\\.org$"</span>))
+       (entries '()))
+    (<span style="color: #efefef;">dolist</span> (file files)
+      (<span style="color: #efefef;">with-temp-buffer</span>
+        (insert-file-contents file)
+        (org-mode)
+        (<span style="color: #efefef;">let</span>
+            ((title (cadr (assoc <span style="color: #30d020;">"TITLE"</span> (org-collect-keywords '(<span style="color: #30d020;">"TITLE"</span>)))))
+             (date (cadr (assoc <span style="color: #30d020;">"DATE"</span> (org-collect-keywords '(<span style="color: #30d020;">"DATE"</span>))))))
+          (push
+           (list <span style="color: #fdc04b;">:date</span> date <span style="color: #fdc04b;">:title</span> title <span style="color: #fdc04b;">:path</span> (file-relative-name file org-project-dir))
+           entries))))
+    (sort entries
+          (<span style="color: #efefef;">lambda</span> (a b)
+            (string&gt;
+             (plist-get a <span style="color: #fdc04b;">:date</span>)
+             (plist-get b <span style="color: #fdc04b;">:date</span>))))))  
+</pre>
+</div>
+
+<p>
+Now we define a function which can format these entries as <i>Org Links</i>
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #efefef;">defun</span> <span style="color: #fdc04b;">rxrj-format-org-entries-as-links</span> (entries)
+(mapcar
+ (<span style="color: #efefef;">lambda</span> (entry)
+     (format <span style="color: #30d020;">"- %s [[file:%s][%s]]"</span>
+             (plist-get entry <span style="color: #fdc04b;">:date</span>)
+             (plist-get entry <span style="color: #fdc04b;">:path</span>)
+             (plist-get entry <span style="color: #fdc04b;">:title</span>)))
+ entries))
+</pre>
+</div>
+
+<p>
+The links in my index file would look like <code>- [Date] [LINK]</code>
+</p>
+
+<p>
+Now we combine the two above in another function which modifies my <code>index.org</code>
+page by adding the links into the <code>Devlog</code> section
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #efefef;">defun</span> <span style="color: #fdc04b;">rxrj-generate-subdir-index</span> (project-dir subdir index-section-identifier)
+(interactive)
+(<span style="color: #efefef;">let*</span> ((entry-links
+          (rxrj-format-org-entries-as-links
+           (rxrj-get-org-entries project-dir subdir)))
+         (index-file (expand-file-name <span style="color: #30d020;">"index.org"</span> project-dir)))
+  (<span style="color: #efefef;">with-temp-buffer</span>
+      (org-mode)
+    (insert-file-contents index-file)
+    (goto-char (point-min))
+    (re-search-forward index-section-identifier)
+    (<span style="color: #efefef;">let</span> ((beg (point))
+            (end (save-excursion (org-end-of-subtree t t) (point))))
+        (delete-region beg end))
+    (insert (mapconcat #'identity entry-links <span style="color: #30d020;">"\n"</span>))
+    (write-file index-file))))
+</pre>
+</div>
+
+<p>
+This will generate the entries for the provided <code>subdir</code> inside provided
+<code>project-dir</code>, format them as links using the two functions defined above. After
+that, it will open the <code>index.org</code> file in the <code>project-dir</code>, search for the section
+using <code>index-section-identifier</code>, and replace that section's contents with the
+formatted links.
+</p>
+
+<p>
+And we can call this function like
+</p>
+<div class="org-src-container">
+<pre class="src src-lisp">(rxrj-generate-subdir-index <span style="color: #30d020;">"~/docs/rxrj"</span> <span style="color: #30d020;">"~/docs/rxrj/devlog"</span> <span style="color: #30d020;">"^\\* Devlog\n"</span>)
+</pre>
+</div>
+</div>
+<div id="outline-container-org11e5081" class="outline-3">
+<h3 id="org11e5081">Static Files</h3>
+<div class="outline-text-3" id="text-org11e5081">
+<p>
+Now for my static files (<code>css</code>, <code>jpeg</code>, <code>png</code> etc) which are in their own directory
+<code>~/docs/rxrj/static</code>, here's how I added another item to the
+<code>org-publish-project-alist</code> to handle that.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-elisp">(<span style="color: #30d020;">"rxrj-static"</span>
+ <span style="color: #fdc04b;">:base-directory</span> <span style="color: #30d020;">"~/docs/rxrj/static"</span>
+ <span style="color: #fdc04b;">:base-extension</span> <span style="color: #30d020;">"css</span><span style="color: #30d020; font-weight: bold;">\\</span><span style="color: #30d020; font-weight: bold;">|</span><span style="color: #30d020; font-weight: bold;">\\</span><span style="color: #30d020; font-weight: bold;">|</span><span style="color: #30d020;">png</span><span style="color: #30d020; font-weight: bold;">\\</span><span style="color: #30d020; font-weight: bold;">|</span><span style="color: #30d020;">jpg</span><span style="color: #30d020; font-weight: bold;">\\</span><span style="color: #30d020; font-weight: bold;">|</span><span style="color: #30d020;">jpeg</span><span style="color: #30d020; font-weight: bold;">\\</span><span style="color: #30d020; font-weight: bold;">|</span><span style="color: #30d020;">gif"</span>
+ <span style="color: #fdc04b;">:publishing-directory</span> <span style="color: #30d020;">"~/docs/rxrj/public/static"</span>
+ <span style="color: #fdc04b;">:recursive</span> t
+ <span style="color: #fdc04b;">:publishing-function</span> org-publish-attachment)
+</pre>
+</div>
+
+<p>
+In this case, we don't want any kind of processing done to the static assets, so
+a basic copying function <code>org-publish-attachment</code> is provided to <i>publishing-function</i>.
+</p>
+</div>
+</div>
+<div id="outline-container-org6bdadea" class="outline-3">
+<h3 id="org6bdadea">RSS Feed</h3>
+<div class="outline-text-3" id="text-org6bdadea">
+<p>
+A Devlog site would be incomplete without it incorporating the RSS feed
+url. Most readers won't like to visit sites to get articles. Email based
+delivery is the worst, as it requires reader to provide their email address.
+</p>
+
+<p>
+But RSS Feed on the other hand is awesome. Readers user their Feed Reader to hit
+the site's RSS URL, and gets all of the updates it is interested in. Only the
+provider (Devlog site) has its url public, not the Reader's email.
+</p>
+
+<p>
+I used a package called <a href="https://git.sr.ht/~taingram/org-publish-rss/">org-publish-rss</a> to generate RSS feeds of my site. Since
+I want the feed to contain updates of only the articles I post (<i>fils inside my
+devlog dir</i>), i updated the project structure yet again to separate out devlog
+pages, and root directory pages.
+</p>
+
+<p>
+The configuration for publishing the <code>devlog</code> pages would also contain the RSS
+feed generation config. It looks like
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #30d020;">"rxrj-devlog"</span>
+ <span style="color: #fdc04b;">:base-directory</span> <span style="color: #30d020;">"~/docs/rxrj/devlog"</span>
+ <span style="color: #fdc04b;">:base-extension</span> <span style="color: #30d020;">"org"</span>
+ <span style="color: #fdc04b;">:publishing-directory</span> <span style="color: #30d020;">"~/docs/rxrj/public/devlog"</span>
+ <span style="color: #fdc04b;">:recursive</span> t
+ <span style="color: #fdc04b;">:publishing-function</span> org-html-publish-to-html
+ <span style="color: #fdc04b;">:headline-levels</span> 4
+ <span style="color: #fdc04b;">:auto-preamble</span> f
+
+ <span style="color: #fdc04b;">:auto-rss</span> t
+ <span style="color: #fdc04b;">:rss-title</span> <span style="color: #30d020;">"rxrj"</span>
+ <span style="color: #fdc04b;">:rss-link</span> <span style="color: #30d020;">"https://riturajb.dev"</span>
+ <span style="color: #fdc04b;">:rss-description</span> <span style="color: #30d020;">"Devlog of Rituraj Borpujari"</span>
+ <span style="color: #fdc04b;">:rss-with-content</span> all
+ <span style="color: #fdc04b;">:completion-function</span> org-publish-rss)
+</pre>
+</div>
+
+<p>
+The <code>:completion-function org-publish-rss</code> part says - after the
+<code>publishing-function</code> is run (<code>org-html-publish-to-html</code>), the next function to run
+is <code>org-publish-rss</code>, which takes care of generating the <code>rss.xml</code> file.
+</p>
+
+<p>
+Other properties are self-explanatory.
+</p>
+
+<p>
+Also, I would need another project config to copy the <code>rss.xml</code> file, which would
+be similar to how <i>static</i> files are handled.
+</p>
+
+<p>
+This would look like,
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #30d020;">"rxrj-rss"</span>
+ <span style="color: #fdc04b;">:base-directory</span> <span style="color: #30d020;">"~/docs/rxrj/devlog"</span>
+ <span style="color: #fdc04b;">:base-extension</span> <span style="color: #30d020;">"xml"</span>
+ <span style="color: #fdc04b;">:publishing-directory</span> <span style="color: #30d020;">"~/docs/rxrj/public"</span>
+ <span style="color: #fdc04b;">:include</span> (<span style="color: #30d020;">"rss.xml"</span>)
+ <span style="color: #fdc04b;">:publishing-function</span> org-publish-attachment)
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orga599649" class="outline-2">
+<h2 id="orga599649">All together now</h2>
+<div class="outline-text-2" id="text-orga599649">
+<p>
+Now to stitch the whole thing together here's what I need to do
+</p>
+
+<ol class="org-ol">
+<li>Generate Index entries for <code>devlog</code> subdir</li>
+<li>Modify index file to add the generated entries in <code>Devlog</code> section</li>
+<li>Use <code>org-publish</code> to publish <code>devlog</code>, <code>static files</code>, and <code>rss.xml</code> file</li>
+</ol>
+
+<p>
+For <i>Step #3</i>, that I added another project config, <code>rxrj</code> which has just one purpose -
+contain the other project configs.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #30d020;">"rxrj"</span>
+ <span style="color: #fdc04b;">:components</span> (
+              <span style="color: #30d020;">"rxrj-devlog"</span>
+              <span style="color: #30d020;">"rxrj-index"</span>
+              <span style="color: #30d020;">"rxrj-static"</span>
+              <span style="color: #30d020;">"rxrj-rss"</span>
+              <span style="color: #30d020;">"rxrj-cname"</span>))
+</pre>
+</div>
+
+<p>
+For <i>Step #1</i>, and <i>Step #2</i> we already have a combined function
+<code>rxrj-generate-subdir-index</code>.
+</p>
+
+<p>
+Stitching the whole thing together, we would now have
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">(<span style="color: #efefef;">defun</span> <span style="color: #fdc04b;">rxrj-publish</span> ()
+  (interactive)
+  (rxrj-generate-subdir-index <span style="color: #30d020;">"~/docs/rxrj"</span> <span style="color: #30d020;">"~/docs/rxrj/devlog"</span> <span style="color: #30d020;">"^\\* Devlog\n"</span>)
+  (org-publish <span style="color: #30d020;">"rxrj"</span> t))
+</pre>
+</div>
+<p>
+This single function does the whole steps and publishes the site, containing all
+the articles and the generated index page.
+</p>
+
+<p>
+The whole code can be viewed in <a href="https://github.com/riturajborpujari/dotfiles/blob/master/.emacs.d/lisp/rxrj.el">here</a>, in my Github repo.
+</p>
+</div>
+</div>
+<div id="outline-container-org88c6773" class="outline-2">
+<h2 id="org88c6773">Future Improvements</h2>
+<div class="outline-text-2" id="text-org88c6773">
+<p>
+I would, in near future, want to make the RSS feed generation a bit more
+controlled, so that it generates only a fixed number of articles in the file.
+</p>
+
+<p>
+Similarly the index file should also contain only a fixed number of devlog
+links. The whole list should be hidden away in another page.
+</p>
+
+<p>
+But I don't have much pages now. For now, I have the Site generator ready to
+use. <b>Powered by Emacs, with Org-mode</b>
+</p>
+</div>
+</div>
+]]>
+</description></item>
+<item>
+<title>Terminal Tools, Shell Aliases, and directory bookmarks</title>
+<link>/terminal-tools-shell-aliases-and-directory-bookmarks.html</link>
+<pubDate>Sun, 28 Apr 2024 00:00:00 +0530</pubDate>
+<guid>/terminal-tools-shell-aliases-and-directory-bookmarks.html</guid>
+<description>
+<![CDATA[<p>
+I like using terminal tools and programs. They are so handy that you can't
+ignore once you get used to them. There are many of them at your disposal, each
+doing something which is unique in their own.
+</p>
+
+<p>
+They do their own thing best, and they work with each other. Take a look at
+[Unix Philosophy](<a href="https://en.wikipedia.org/wiki/Unix_philosophy">https://en.wikipedia.org/wiki/Unix_philosophy</a>) to understand
+the guiding principles that these tools follow to make them so easy to work
+with!
+</p>
+
+<p>
+As I begin using these tools and the many ways in which they allow
+[composability](<a href="https://en.wikipedia.org/wiki/Function_composition_(computer_science)">https://en.wikipedia.org/wiki/Function_composition_(computer_science)</a>),
+I found myself using such composed commands and even scripts. Here's one that
+allows me to move to frequently used directories without typing the path
+everytime, from any directory I'm in!
+</p>
+<div id="outline-container-org9b00818" class="outline-2">
+<h2 id="org9b00818">Directory bookmarks</h2>
+<div class="outline-text-2" id="text-org9b00818">
+<p>
+We use <code>cd</code> a lot in terminal. It allows us to change to the directory we want to
+work on. As I started using [fzf](<a href="https://wiki.archlinux.org/title/fzf">https://wiki.archlinux.org/title/fzf</a>), finding
+a specific subdirectory became much more easier than before. I can type in <code>cd
+$(fzf)</code> and it will open up a search window where I can
+[fuzzy-search](<a href="https://en.wikipedia.org/wiki/Approximate_string_matching">https://en.wikipedia.org/wiki/Approximate_string_matching</a>) for a
+specific directory. I can write a shell alias like <code>alias cdf</code>"cd $(fzf)"= and
+then I can just type in <code>cdf</code> and press <code>return</code> to activate the command. Its great!
+</p>
+
+<p>
+But still, when I'm deep in a particular directory and I wanted to move to
+another directory which is not a sub dir this gives me a problem. Because the
+required directory that I want to move into is not a subdirectory, I can't just
+<code>cdf</code> any more (atleast not from the current dir). I have to move up the directory
+structure untill the required directory becomes a subdir to the present working
+directory. This is inadequate!
+</p>
+
+<p>
+What if I can store certain directories that I frequently <code>cd</code> into, somewhere in
+a file, and then use <code>fzf</code> to match and <code>cd</code> into whichever one I want. That would
+be awesome!
+</p>
+
+<p>
+That's what I built with <b><b><code>dmk</code> (directory bookmark)</b></b>. Its a set of two shell
+aliases to help me navigate to any directory with ease. From anywhere!!!
+</p>
+</div>
+</div>
+<div id="outline-container-org2ad4570" class="outline-2">
+<h2 id="org2ad4570">Marking directories as bookmarks</h2>
+<div class="outline-text-2" id="text-org2ad4570">
+<p>
+First things first, I need a way to mark certain directories as important so
+that I can come back to them when needed. For this, I just need to save the
+directory path into a file.
+</p>
+
+<p>
+If I run the command <code>pwd &gt;&gt; ~/.dmks</code>, the present working directory path gets
+appended to a file called <code>.dmks</code> in my home directory <code>~</code>. Here, <code>pwd</code> command prints
+the present working directory to terminal, and <code>&gt;&gt;</code> causes that output to get
+appended to the filename provided after.
+</p>
+
+<p>
+For simpler frequent usage, I created an alias <code>alias dmk = "pwd &gt;&gt; ~/.dmks"</code> . I
+added this command into my shell init rc file <code>~/.bashrc</code> and the alias is
+available from any shell window I open next.
+</p>
+</div>
+</div>
+<div id="outline-container-orgde206ed" class="outline-2">
+<h2 id="orgde206ed">Moving into a bookmarked directory</h2>
+<div class="outline-text-2" id="text-orgde206ed">
+<p>
+Okay, now that we have a way of marking directories by saving their path into a
+file, its time to use <code>fzf</code> to move into one.
+</p>
+
+<p>
+For this I run the command <code>cd $(cat ~/.dmks | fzf)</code>. This moves into the
+directory which is given by the <a href="https://en.wikiversity.org/wiki/Bash_programming/Subshells">sub-shell command</a> <code>cat ~/.dmks | fzf</code>. Whatever is
+the output of this sub-shell command gets used by <code>cd</code> and it will cause the
+change in working directory. It's key to note that, <code>cat ~/.dmks</code> prints the
+content of the file <code>~/.dmks</code> into the shell and because of the pipe operator <code>|</code> it
+gets passed on to <code>fzf</code>. This file has all of our marked directories which we
+marked with <code>dmk</code> and this list is passed on to FZF. FZF then shows an interactive
+search window, from which we can search the required directory from the list of
+marked directories and select the one we need.
+</p>
+
+<p>
+Again, to help simplify running this command regularly, I have created a shell
+alias for this too! <code>alias cdmk = "cd \$(cat ~/.dmks | fzf)"</code> creates an alias and
+I write this command in the shell rc file <code>~/.bashrc</code> to make it available in any
+new shell window as well.
+</p>
+
+<p>
+Note the escape character <code>\</code> is required before <code>$</code> when writing into the shell rc
+file! Otherwise, the shell will execute the command itself when initializing the
+alias! We don't want that! We want us to be able to use the alias, and when we
+do that, we need the command to run!
+</p>
+
+<p>
+That is that, and I get directory bookmark system available in any of my shell
+window!!! <code>dmk</code> and <code>cdmk</code>!!!
+</p>
+
+<p>
+P.S. here is the <a href="https://gist.github.com/riturajborpujari/096d8b704157a7ad3eb5f8237ba05b52">link to the gist containing the aliases</a>
+</p>
+
+<p>
+Cheers!
+</p>
+</div>
+</div>
+]]>
+</description></item>
+<item>
+<title>Building a Downloader in Go</title>
+<link>/building-a-downloader-in-go.html</link>
+<pubDate>Mon, 10 Mar 2025 00:00:00 +0530</pubDate>
+<guid>/building-a-downloader-in-go.html</guid>
+<description>
+<![CDATA[<p>
+People say Go is well suited for Network applications. With its light Goroutines
+and huge standard library it can get most of the job done without even needing a
+third-party library.
+</p>
+
+<p>
+Great, let me build a terminal program to download files.
+</p>
+<div id="outline-container-orgbbc4741" class="outline-2">
+<h2 id="orgbbc4741">Accio</h2>
+<div class="outline-text-2" id="text-orgbbc4741">
+<p>
+The <a href="https://harrypotter.fandom.com/wiki/Summoning_Charm">summoning charm from Harry Potter</a> seems like a fit name for my
+downloader. Like when Harry Potter says <i>"Accio Dittany"</i> and out pops the bottle
+of Dittany potion from Hermione's bag with an <i>"Undectable Extension Charm"</i>, our
+version of Accio would do something similar, albeit with URLs.
+</p>
+
+<p>
+So running <code>accio url</code> would get you the file from the <code>url</code>.
+</p>
+
+<p>
+Simple enough! Let's start then.
+</p>
+</div>
+</div>
+<div id="outline-container-orgd2a725d" class="outline-2">
+<h2 id="orgd2a725d">The process</h2>
+<div class="outline-text-2" id="text-orgd2a725d">
+<p>
+The module <code>net/http</code> gives us this amazing method for making a GET request -
+</p>
+
+<p>
+<code>http.Get(url string) (resp *httpResponse, err error)</code>
+</p>
+
+<p>
+With this, we can run a <code>GET</code> request to <code>url</code> and we get a response object (of type
+<code>httpResponse</code>) and a possible error (of type <code>error</code>). We check for any error that
+might have occured while making the request and then move on to reading the data
+bytes from <code>httpResponse.Body</code>.
+</p>
+
+<p>
+But before reading the body, we would need to create and open a file for writing
+with the following method. And <code>os</code> module has the capability we need
+</p>
+
+<div class="org-src-container">
+<pre class="src src-go">os.<span style="color: #fdc04b;">OpenFile</span>(name <span style="color: #d0f0d0;">string</span>, flag <span style="color: #d0f0d0;">int</span>, perm <span style="color: #d0f0d0;">fs.FileMode</span>) (*<span style="color: #d0f0d0;">os.File</span>, <span style="color: #d0f0d0;">error</span>)
+</pre>
+</div>
+
+<p>
+We also need <code>os</code> to get the CLI argument for URL being passed into our program by
+the user while running command <code>accio URL</code>. We need <code>io</code> module because it has
+defined the <code>io.EOF</code> error value that we need to test to know when we've reached
+the end of reading the response body. With the file opened and the response body
+ready for reading, we would simply need to loop this following
+</p>
+</div>
+<div id="outline-container-orga44f3df" class="outline-3">
+<h3 id="orga44f3df">Copy Data process</h3>
+<div class="outline-text-3" id="text-orga44f3df">
+<ol class="org-ol">
+<li>Initialize a buffer</li>
+<li>Read <code>n</code> bytes from response body into a buffer</li>
+<li>If <code>n</code> is non-zero we write <code>n</code> bytes to the file</li>
+<li>If error occured is <code>EOF</code> (End of file - indicates response data end)
+We break the loop (go to step 6)</li>
+<li>Go to step 2 (repeat)</li>
+<li>We close the file and the response body</li>
+</ol>
+
+
+<p>
+Here's the actual code
+</p>
+
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #efefef;">response</span>, <span style="color: #efefef;">err</span> := http.<span style="color: #fdc04b;">Get</span>(downloadUrl)
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">handle error
+</span><span style="color: #efefef;">defer</span> response.Body.<span style="color: #fdc04b;">Close</span>()
+
+<span style="color: #efefef;">file</span>, <span style="color: #efefef;">err</span> := os.<span style="color: #fdc04b;">OpenFile</span>(
+    <span style="color: #30d020;">"download"</span>,
+    os.O_WRONLY | os.O_CREATE,
+    os.ModePerm,
+)
+<span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">handle error
+</span><span style="color: #efefef;">defer</span> file.<span style="color: #fdc04b;">Close</span>()
+
+<span style="color: #efefef;">buffer</span> := <span style="color: #fdc04b;">make</span>([]<span style="color: #d0f0d0;">byte</span>, 512)
+<span style="color: #efefef;">for</span> {
+    buffer = buffer[0:512]
+    <span style="color: #efefef;">n</span>, <span style="color: #efefef;">err</span> := response.Body.<span style="color: #fdc04b;">Read</span>(buffer)
+
+    <span style="color: #efefef;">if</span> n &gt; 0 {
+        file.<span style="color: #fdc04b;">Write</span>(buffer[0:n])
+    }
+
+    <span style="color: #efefef;">if</span> err != <span style="color: #30d020;">nil</span> {
+        <span style="color: #efefef;">if</span> err != io.EOF {
+            fmt.<span style="color: #fdc04b;">Fprintf</span>(
+                os.Stderr,
+                <span style="color: #30d020;">"download error: %s\n"</span>,
+                err,
+            )
+            os.<span style="color: #fdc04b;">Exit</span>(-1)
+        }
+        <span style="color: #efefef;">break</span>
+    }
+}
+</pre>
+</div>
+
+<p>
+We open the file with <code>flags</code> as <code>os.O_WRONLY | os.O_CREATE</code> which causes it to open
+a file for writing and the <code>perm</code> as <code>os.ModePerm</code> so that the opened file gets the
+same permissions as our executable program <code>accio</code>
+</p>
+
+<p>
+We reset the <code>buffer</code> slice's capacity to <code>512</code> each time in the loop to utilize the
+full capacity and let the <code>Read</code> method of <code>response.Body</code> to fill it up with <code>n</code>
+bytes.
+</p>
+
+<p>
+We then proceed to write only <code>n</code> bytes to the file because that's how much we
+read in this iteration from <code>response.Body</code>
+</p>
+
+<p>
+If error has occured, we need to stop everything. If the error is not <code>EOF</code> we
+also log this onto the terminal. Otherwise, we silently break the loop
+</p>
+
+<p>
+## Showing progress The next part is to show progress of the download. For this
+I'm going to use the channel feature of golang.
+</p>
+
+<p>
+Basically the download (more specifically the copy of bytes from response body
+to file) would be happening on another go routine and it will send progress
+stats over a channel. The main routine can then read messages from this channel
+to display progress.
+</p>
+
+<p>
+Here's the structure I used for the download progress status message
+</p>
+
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #efefef;">type</span> <span style="color: #d0f0d0;">DownloadStatus</span> <span style="color: #efefef;">struct</span> {
+    Error           <span style="color: #d0f0d0;">error</span>
+    IsComplete      <span style="color: #d0f0d0;">bool</span>
+    BytesDownloaded <span style="color: #d0f0d0;">int64</span>
+}
+</pre>
+</div>
+
+<p>
+This will suffice. The copying logic will post a message of type <code>DownloadStatus</code>
+on the <code>statusChannel</code> channel so that the main routine can display the progress
+</p>
+
+<p>
+here's the updated function to copy data from <code>src</code> to <code>dest</code> while posting updates
+of the progress
+</p>
+
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #efefef;">func</span> <span style="color: #fdc04b;">copyVerbose</span>(<span style="color: #efefef;">dest</span> <span style="color: #d0f0d0;">io.Writer</span>,
+                 <span style="color: #efefef;">src</span> <span style="color: #d0f0d0;">io.Reader</span>,
+                 <span style="color: #efefef;">statusChannel</span> <span style="color: #efefef;">chan</span> <span style="color: #d0f0d0;">DownloadStatus</span>) {
+    <span style="color: #efefef;">buf</span> := <span style="color: #fdc04b;">make</span>([]<span style="color: #d0f0d0;">byte</span>, COPY_BUFFER_SIZE)
+    <span style="color: #efefef;">status</span> := <span style="color: #d0f0d0;">DownloadStatus</span>{}
+
+    <span style="color: #efefef;">for</span> {
+        <span style="color: #efefef;">nread</span>, <span style="color: #efefef;">err</span> := src.<span style="color: #fdc04b;">Read</span>(buf)
+        <span style="color: #efefef;">if</span> nread &gt; 0 {
+            <span style="color: #efefef;">nwritten</span>, <span style="color: #efefef;">err</span> := dest.<span style="color: #fdc04b;">Write</span>(buf[0:nread])
+            <span style="color: #efefef;">if</span> err != <span style="color: #30d020;">nil</span> {
+                status.Error = err
+                <span style="color: #efefef;">break</span>
+            }
+            status.BytesDownloaded += <span style="color: #fdc04b;">int64</span>(nwritten)
+        }
+        <span style="color: #efefef;">if</span> err != <span style="color: #30d020;">nil</span> {
+            <span style="color: #efefef;">if</span> err == io.EOF {
+                status.IsComplete = <span style="color: #30d020;">true</span>
+            } <span style="color: #efefef;">else</span> {
+                status.Error = err
+            }
+        }
+        statusChannel &lt;- status
+    }
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org59bd77c" class="outline-3">
+<h3 id="org59bd77c">Showing progress in</h3>
+<div class="outline-text-3" id="text-org59bd77c">
+<p>
+Now to show progress on the <code>main</code> routine, we need to do this
+</p>
+
+<ol class="org-ol">
+<li>create a ticker (which ticks periodically at say 500 ms)</li>
+<li>use <code>select</code> to read from ticker and the <code>statusChannel</code></li>
+<li>if read from statusChannel, store it in a local variable</li>
+<li>if read from ticker channel, show the progress</li>
+<li>go to step 2 and repeat</li>
+</ol>
+
+<p>
+of course, we would close this repeat loop once we find the status message
+contains <code>IsComplete</code> as <code>true</code>
+</p>
+
+<p>
+here's the code for that (partial <code>main</code> function)
+</p>
+
+<div class="org-src-container">
+<pre class="src src-go"><span style="color: #efefef;">lastStatus</span> := <span style="color: #d0f0d0;">DownloadStatus</span>{}
+<span style="color: #efefef;">ticker</span>:= time.<span style="color: #fdc04b;">NewTicker</span>(time.Millisecond * 500)
+<span style="color: #efefef;">go</span> <span style="color: #fdc04b;">downloadUrl</span>(url, &amp;<span style="color: #d0f0d0;">DownloadOptions</span>{<span style="color: #30d020;">Filepath</span>: filename}, statusChannel)
+
+<span style="color: #efefef;">done</span> := <span style="color: #30d020;">false</span>
+<span style="color: #efefef;">for</span> done != <span style="color: #30d020;">true</span> {
+    <span style="color: #efefef;">select</span> {
+    <span style="color: #efefef;">case</span> &lt;-ticker.C:
+        <span style="color: #efefef;">n</span>, <span style="color: #efefef;">unit</span> := <span style="color: #fdc04b;">getFormattedSize</span>(lastStatus.BytesDownloaded)
+        <span style="color: #efefef;">if</span> lastStatus.IsComplete == <span style="color: #30d020;">true</span> {
+            fmt.<span style="color: #fdc04b;">Printf</span>(<span style="color: #30d020;">"\x1B[1K\rcompleted: %.2f %s\n"</span>, n, unit)
+            done = <span style="color: #30d020;">true</span>
+            <span style="color: #efefef;">break</span>
+        }
+        <span style="color: #efefef;">if</span> lastStatus.Error != <span style="color: #30d020;">nil</span> {
+            fmt.<span style="color: #fdc04b;">Fprintf</span>(
+                os.Stderr,
+                <span style="color: #30d020;">"download failed: %s\n"</span>,
+                lastStatus.Error)
+            done = <span style="color: #30d020;">true</span>
+            <span style="color: #efefef;">break</span>
+        }
+        fmt.<span style="color: #fdc04b;">Printf</span>(<span style="color: #30d020;">"\x1B[1K\r%.2f %s"</span>, n, unit)
+    <span style="color: #efefef;">case</span> <span style="color: #efefef;">status</span> := &lt;-statusChannel:
+        lastStatus = status
+    }
+}
+</pre>
+</div>
+
+<p>
+The escape sequence in printf (<code>\x1B[1K</code>) deletes the current line and <code>\r</code> moves
+the cursor to the beginning of the line. <a href="https://www2.ccs.neu.edu/research/gpc/VonaUtils/vona/terminal/vtansi.htm">See more</a>
+</p>
+
+<p>
+This effectively shows us the updated progress by deleting the old progress
+every 500 ms
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org47793c2" class="outline-2">
+<h2 id="org47793c2">Conclusion</h2>
+<div class="outline-text-2" id="text-org47793c2">
+<p>
+We've got ourselves a http(s) downloader using Golang's standard libraries only.
+The downloader shows progress as it downloads and saves the file with name as
+found looking at the url (or <code>download</code> if the url doesn't contain a
+<code>/resource_name.extension</code> part at the end
+</p>
+
+<p>
+There are many more things that can be done here. Some of the basic ones are
+</p>
+<ol class="org-ol">
+<li>Add multi connections to speed up downloads</li>
+<li>Add pause / resume capability</li>
+</ol>
+
+<p>
+Both of them requires the usage of response header <code>Accept-Range</code> which denotes
+whether the server supports requesting file data by a specific range. The
+corresponding request header is <code>Range</code> which can be added in the request to let
+the server know which range of data we need
+</p>
+
+<p>
+I'll pick this up in the next iteration of <code>Accio</code> our very own http downloader.
+</p>
+</div>
+</div>
+]]>
+</description></item>
+<item>
+<title>Better sessions with VIM</title>
+<link>/vim-better-sessions.html</link>
+<pubDate>Wed, 23 Jul 2025 00:00:00 +0530</pubDate>
+<guid>/vim-better-sessions.html</guid>
+<description>
+<![CDATA[<p>
+Vim sessions are great! They give me power to jump back into whatever I was
+working on earlier with ease. Among other things, all my open buffers are
+restored, and the <code>.viminfo</code> file keeps track of my <code>:marks</code>, <code>:jumps</code> and <code>:registers</code>
+already. So it feels like I am actually continuing from where I left off.
+</p>
+
+<p>
+But, I like to work on multiple things. Small side-projects, or POCs, or an idea
+I've been thinking about implementing for so long. They all coexist in my system
+as partially completed or just started code. Also, I don't keep notes about code
+project ideas. I start it off as a project itself.
+</p>
+
+<p>
+Now this is where Vim needs a custom flow for me. I can easily create and
+maintain different sessions for my different projects. But the <code>.viminfo</code> file is
+shared among them. So the <code>:marks</code> are shared which is a pain. To help me with
+this, I created my custom Session management code and that's what BetterSessions
+is!
+</p>
+
+<p>
+BetterSessions is not anything new. It just wraps vim sessions along with custom
+viminfo together. Here's how it happens
+</p>
+
+<p>
+For storing sessions,
+</p>
+<ol class="org-ol">
+<li>Store session normally with <code>:mksesion! &lt;session_name&gt;.vim</code></li>
+<li>Write the current <code>.viminfo</code> with <code>:wviminfo! &lt;session_name&gt;.viminfo</code></li>
+</ol>
+
+<p>
+For loading sessions, we just do the same thing in reverse
+</p>
+<ol class="org-ol">
+<li>Load session normally with <code>:source &lt;session_name&gt;.vim</code></li>
+<li>Read <code>viminfo</code> with <code>:rviminfo! &lt;session_name&gt;.viminfo</code></li>
+</ol>
+
+<p>
+Voila! Now you have separate viminfo for each session you store, and thus your
+marks, registers, jumps etc are restored when you load the session
+</p>
+
+<p>
+Cleaning up, I used <code>$HOME/.local/state/vim/better-sessions</code> to store the session
+and viminfo files. I also added commands <code>:SessionLoad &lt;session_name&gt;</code> and
+<code>:SessionStore &lt;session_name&gt;</code> to help me add keybinds for this.  Just for better
+usability I also added completion options for the commands, so typing
+<code>:SessionLoad &lt;TAB&gt;</code> will show you the list of sessions available under
+better-sessions.
+</p>
+
+<p>
+You can find my code for reference at <a href="https://github.com/riturajborpujari/better-session.vim">better-session</a>
+</p>
+
+<p>
+Cheers
+</p>
+]]>
+</description></item>
+</channel>
+</rss>

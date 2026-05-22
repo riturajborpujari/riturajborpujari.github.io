@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2026-05-22 Fri 16:53 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Competing with JSON.stringify</title>
+<meta name="author" content="Rituraj Borpujari" />
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<div id="preamble" class="status">
+<div class="site-nav"><a href="/">Home</a></div>
+</div>
+<div id="content" class="content">
+<h1 class="title">Competing with JSON.stringify
+<br />
+<span class="subtitle">by building a custom one</span>
+</h1>
+<p>
+This came up during a discussion with my friend about Recursion. Why not build a
+Javascript <code>JSON.stringify</code> method as a recursive programming exercise? Seems like
+a great idea.
+</p>
+<div id="outline-container-org9cad42d" class="outline-2">
+<h2 id="org9cad42d">The first draft</h2>
+<div class="outline-text-2" id="text-org9cad42d">
+<p>
+I quickly drafted out the first version. And it performed horribly! The <b><b>time
+required was about 4 times that of the standard</b></b> <code>JSON.stringify</code>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #efefef;">function</span> <span style="color: #fdc04b;">json_stringify</span>(<span style="color: #efefef;">obj</span>) {
+  <span style="color: #fdc04b;">if</span> (<span style="color: #efefef;">typeof</span> obj == <span style="color: #30d020;">"number"</span> || <span style="color: #efefef;">typeof</span> obj == <span style="color: #30d020;">"boolean"</span>) {
+    <span style="color: #efefef;">return</span> <span style="color: #fdc04b;">String</span>(obj);
+  }
+
+  <span style="color: #fdc04b;">if</span> (<span style="color: #efefef;">typeof</span> obj == <span style="color: #30d020;">"string"</span>) {
+    <span style="color: #efefef;">return</span> <span style="color: #30d020;">`"${obj}"`</span>;
+  }
+
+  <span style="color: #fdc04b;">if</span> (Array.<span style="color: #fdc04b;">isArray</span>(obj)) {
+    <span style="color: #efefef;">return</span> <span style="color: #30d020;">"["</span> + obj.<span style="color: #fdc04b;">map</span>(json_stringify).<span style="color: #fdc04b;">join</span>(<span style="color: #30d020;">","</span>) + <span style="color: #30d020;">"]"</span>;
+  }
+
+  <span style="color: #fdc04b;">if</span> (<span style="color: #efefef;">typeof</span> obj === <span style="color: #30d020;">"object"</span>) {
+    <span style="color: #efefef;">const</span> <span style="color: #efefef;">properties_str</span> = Object.<span style="color: #fdc04b;">entries</span>(obj)
+      .<span style="color: #fdc04b;">map</span>(([key, val]) =&gt; {
+        <span style="color: #efefef;">return</span> <span style="color: #30d020;">`"${key}":${json_stringify(val)}`</span>;
+      })
+      .<span style="color: #fdc04b;">join</span>(<span style="color: #30d020;">","</span>);
+    <span style="color: #efefef;">return</span> <span style="color: #30d020;">"{"</span> + properties_str + <span style="color: #30d020;">"}"</span>;
+  }
+}
+</pre>
+</div>
+
+<p>
+By running the following, we can see that our `json<sub>stringify</sub>` works as
+expected.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #efefef;">const</span> { assert } = <span style="color: #fdc04b;">require</span>(<span style="color: #30d020;">"console"</span>);
+<span style="color: #efefef;">const</span> <span style="color: #efefef;">test_obj</span> = {
+  name: <span style="color: #30d020;">"John Doe"</span>,
+  age: 23,
+  hobbies: [<span style="color: #30d020;">"football"</span>, <span style="color: #30d020;">"comet study"</span>]
+};
+
+<span style="color: #fdc04b;">assert</span>(<span style="color: #fdc04b;">json_stringify</span>(test_obj) === JSON.<span style="color: #fdc04b;">stringify</span>(test_obj))
+</pre>
+</div>
+
+<p>
+To test more scenarios, and multiple runs to get an average idea of how our 
+script runs, we made a simple testing script!
+</p>
+</div>
+</div>
+<div id="outline-container-orgcfc6f9f" class="outline-2">
+<h2 id="orgcfc6f9f">A simple testing script</h2>
+<div class="outline-text-2" id="text-orgcfc6f9f">
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #efefef;">function</span> <span style="color: #fdc04b;">validity_test</span>(<span style="color: #efefef;">fn1</span>, <span style="color: #efefef;">fn2</span>, <span style="color: #efefef;">test_values</span>) {
+  <span style="color: #fdc04b;">for</span> (<span style="color: #efefef;">const</span> <span style="color: #efefef;">test_value</span> <span style="color: #efefef;">of</span> test_values) {
+    <span style="color: #fdc04b;">assert</span>(<span style="color: #fdc04b;">fn1</span>(test_value) == <span style="color: #fdc04b;">fn2</span>(test_value));
+  }
+}
+
+<span style="color: #efefef;">function</span> <span style="color: #fdc04b;">time</span>(<span style="color: #efefef;">fn</span>, <span style="color: #efefef;">num_runs</span> = 1, ...<span style="color: #efefef;">args</span>) {
+  <span style="color: #efefef;">const</span> <span style="color: #efefef;">start_time</span> = Date.<span style="color: #fdc04b;">now</span>()
+
+  <span style="color: #fdc04b;">for</span> (<span style="color: #efefef;">let</span> <span style="color: #efefef;">i</span> = 0; i &lt; num_runs; i++) {
+    <span style="color: #fdc04b;">fn</span>(...args);
+  }
+
+  <span style="color: #efefef;">const</span> <span style="color: #efefef;">end_time</span> = Date.<span style="color: #fdc04b;">now</span>()
+  <span style="color: #efefef;">return</span> end_time - start_time
+}
+
+
+<span style="color: #efefef;">function</span> <span style="color: #fdc04b;">performance_test</span>(<span style="color: #efefef;">counts</span>) {
+  console.<span style="color: #fdc04b;">log</span>(<span style="color: #30d020;">"Starting performance test with"</span>, test_obj);
+
+  <span style="color: #fdc04b;">for</span> (<span style="color: #efefef;">const</span> <span style="color: #efefef;">count</span> <span style="color: #efefef;">of</span> counts) {
+    console.<span style="color: #fdc04b;">log</span>(<span style="color: #30d020;">"Testing"</span>, count, <span style="color: #30d020;">"times"</span>);
+
+    <span style="color: #efefef;">const</span> <span style="color: #efefef;">duration_std_json</span> = <span style="color: #fdc04b;">time</span>(JSON.stringify.<span style="color: #fdc04b;">bind</span>(JSON), count, test_obj);
+    console.<span style="color: #fdc04b;">log</span>(<span style="color: #30d020;">"\tStd lib JSON.stringify() took"</span>, duration_std_json, <span style="color: #30d020;">"ms"</span>);
+
+    <span style="color: #efefef;">const</span> <span style="color: #efefef;">duration_custom_json</span> = <span style="color: #fdc04b;">time</span>(json_stringify, count, test_obj);
+    console.<span style="color: #fdc04b;">log</span>(<span style="color: #30d020;">"\tCustom json_stringify() took"</span>, duration_custom_json, <span style="color: #30d020;">"ms"</span>);
+  }
+}
+
+<span style="color: #efefef;">const</span> <span style="color: #efefef;">test_obj</span> = {} <span style="color: #ff7f24;">// </span><span style="color: #ff7f24;">a deeply nested JS object, ommitted here for brevity 
+</span><span style="color: #efefef;">const</span> <span style="color: #efefef;">test_values</span> = [
+  12,
+  <span style="color: #30d020;">"string test"</span>,
+  [12, 34, 1],
+  [12, <span style="color: #30d020;">true</span>, 1, <span style="color: #30d020;">false</span>],
+  test_obj
+];
+
+<span style="color: #fdc04b;">validity_test</span>(JSON.stringify, json_stringify, test_values);
+<span style="color: #fdc04b;">performance_test</span>([1000, 10_000, 100_000, 1000_000]);
+</pre>
+</div>
+
+<p>
+Running this we get the timings like the following.
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">Testing 1000 times
+    Std lib JSON.stringify() took 5 ms
+    Custom json_stringify() took 20 ms
+Testing 10000 times
+    Std lib JSON.stringify() took 40 ms
+    Custom json_stringify() took 129 ms
+Testing 100000 times
+    Std lib JSON.stringify() took 388 ms
+    Custom json_stringify() took 1241 ms
+Testing 1000000 times
+    Std lib JSON.stringify() took 3823 ms
+    Custom json_stringify() took 12275 ms
+</pre>
+</div>
+
+
+<p>
+It might run differently on different systems but the ratio of the time taken 
+by std <code>JSON.strngify</code> to that of our custom <code>json_stringify</code> should be about 
+<b><b>1:3</b></b> - <b><b>1:4</b></b>
+</p>
+
+<p>
+It could be different too in an interesting case. Read on to know more about 
+that!
+</p>
+</div>
+</div>
+<div id="outline-container-orga230bba" class="outline-2">
+<h2 id="orga230bba">Improving performance</h2>
+<div class="outline-text-2" id="text-orga230bba">
+<p>
+The first thing that could be fixed is the use of <code>map</code> function. It creates new
+array from the old one. In our case of objects, it is creating an array of JSON
+stringified object properties out of the array containing object entries.
+</p>
+
+<p>
+Similar thing is also happening with stringification of the array elements too.
+</p>
+
+<p>
+We have to loop over the elements in an array, or the entries of an object! But
+we can skip creating another array just to join the JSON stringified parts.
+</p>
+
+<p>
+Here's the updated version (only the changed parts shown for brevity)
+</p>
+
+<div class="org-src-container">
+<pre class="src src-js"><span style="color: #efefef;">function</span> <span style="color: #fdc04b;">json_stringify</span>(<span style="color: #efefef;">val</span>) {
+  <span style="color: #fdc04b;">if</span> (<span style="color: #efefef;">typeof</span> val === <span style="color: #30d020;">"number"</span> || <span style="color: #efefef;">typeof</span> val === <span style="color: #30d020;">"boolean"</span>) {
+    <span style="color: #efefef;">return</span> <span style="color: #fdc04b;">String</span>(val);
+  }
+
+  <span style="color: #fdc04b;">if</span> (<span style="color: #efefef;">typeof</span> val === <span style="color: #30d020;">"string"</span>) {
+    <span style="color: #efefef;">return</span> <span style="color: #30d020;">`"${val}"`</span>;
+  }
+
+  <span style="color: #fdc04b;">if</span> (Array.<span style="color: #fdc04b;">isArray</span>(val)) {
+    <span style="color: #efefef;">let</span> <span style="color: #efefef;">elements_str</span> = <span style="color: #30d020;">"["</span>
+
+    <span style="color: #efefef;">let</span> <span style="color: #efefef;">sep</span> = <span style="color: #30d020;">""</span>
+    <span style="color: #fdc04b;">for</span> (<span style="color: #efefef;">const</span> <span style="color: #efefef;">element</span> <span style="color: #efefef;">of</span> val) {
+      elements_str += sep + <span style="color: #fdc04b;">json_stringify</span>(element)
+      sep = <span style="color: #30d020;">","</span>
+    }
+    elements_str += <span style="color: #30d020;">"]"</span>
+
+    <span style="color: #efefef;">return</span> elements_str
+  }
+
+  <span style="color: #fdc04b;">if</span> (<span style="color: #efefef;">typeof</span> val === <span style="color: #30d020;">"object"</span>) {
+    <span style="color: #efefef;">let</span> <span style="color: #efefef;">properties_str</span> = <span style="color: #30d020;">"{"</span>
+
+    <span style="color: #efefef;">let</span> <span style="color: #efefef;">sep</span> = <span style="color: #30d020;">""</span>
+    <span style="color: #fdc04b;">for</span> (<span style="color: #efefef;">const</span> <span style="color: #efefef;">key</span> <span style="color: #efefef;">in</span> val) {
+      properties_str += sep + <span style="color: #30d020;">`"${key}":${json_stringify(val[key])}`</span>
+      sep = <span style="color: #30d020;">","</span>
+    }
+    properties_str += <span style="color: #30d020;">"}"</span>
+
+    <span style="color: #efefef;">return</span> properties_str;
+  }
+}
+</pre>
+</div>
+
+<p>
+And here's the output of the test script now
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">Testing 1000 times
+        Std lib JSON.stringify() took 5 ms
+        Custom json_stringify() took 6 ms
+Testing 10000 times
+        Std lib JSON.stringify() took 40 ms
+        Custom json_stringify() took 43 ms
+Testing 100000 times
+        Std lib JSON.stringify() took 393 ms
+        Custom json_stringify() took 405 ms
+Testing 1000000 times
+        Std lib JSON.stringify() took 3888 ms
+        Custom json_stringify() took 3966 ms
+</pre>
+</div>
+
+<p>
+This looks a lot better now. Our custom <code>json_stringify</code> is taking only 3 ms more
+than <code>JSON.stringify</code> to stringify a deep nested object 10,000 times.  Although
+this is not perfect, it is an acceptable delay.
+</p>
+</div>
+</div>
+<div id="outline-container-orgd04f9f0" class="outline-2">
+<h2 id="orgd04f9f0">Squeezing out more??</h2>
+<div class="outline-text-2" id="text-orgd04f9f0">
+<p>
+The current delay could be due to all the string creation and concatenation
+that's happening. Every time we run <code>elements_str +</code> sep +
+json<sub>stringify</sub>(element)= we are concatenating 3 strings.
+</p>
+
+<p>
+Concatenating strings is costly because it requires
+</p>
+<ol class="org-ol">
+<li>creating a new string buffer to fit the whole combined string</li>
+<li>copy individual strings to the newly created buffer</li>
+</ol>
+
+<p>
+By using a <code>Buffer</code> ourselves and writing the data directly there might give us a
+performance improvement. Since we can create a large buffer (say 80 characters)
+and then create new buffers to fit 80 characters more when it runs out.
+</p>
+
+<p>
+We won't be avoiding the reallocation / copying of data altogether, but we will
+reducing those operations.
+</p>
+
+<p>
+Another possible delay is the recursive process itself! Specifically the
+function call which takes up time. Consider our function call
+<code>json_stringify(val)</code> which just has one parameter.
+</p>
+</div>
+</div>
+<div id="outline-container-org7ec0632" class="outline-2">
+<h2 id="org7ec0632">Understanding Function calls</h2>
+<div class="outline-text-2" id="text-org7ec0632">
+<p>
+The steps would be
+</p>
+<ol class="org-ol">
+<li>Push the return address to the stack</li>
+<li>push the argument reference to the stack</li>
+<li>In the called function
+<ol class="org-ol">
+<li>Pop the parameter reference from the stack</li>
+<li>Pop the return address from the stack</li>
+<li>push the return value (the stringified part) onto the stack</li>
+</ol></li>
+<li>In the calling function
+<ol class="org-ol">
+<li>Pop off the value returned by the function from the stack</li>
+</ol></li>
+</ol>
+
+<p>
+All these operations happen to ensure function calls happen and this adds CPU
+costs.
+</p>
+
+<p>
+If we create a non-recursive algorithm of <code>json_stringify</code> all these operations
+listed above for function call (times the number of such calls) would be reduced
+to none.
+</p>
+
+<p>
+This can be a future attempt.
+</p>
+</div>
+</div>
+<div id="outline-container-org70187be" class="outline-2">
+<h2 id="org70187be">NodeJs version differences</h2>
+<div class="outline-text-2" id="text-org70187be">
+<p>
+One last thing to note here. Consider the following output of the test script
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">Testing 1000 times
+        Std lib JSON.stringify() took 8 ms
+        Custom json_stringify() took 8 ms
+Testing 10000 times
+        Std lib JSON.stringify() took 64 ms
+        Custom json_stringify() took 51 ms
+Testing 100000 times
+        Std lib JSON.stringify() took 636 ms
+        Custom json_stringify() took 467 ms
+Testing 1000000 times
+        Std lib JSON.stringify() took 6282 ms
+        Custom json_stringify() took 4526 ms
+</pre>
+</div>
+
+<p>
+Did our custom <code>json_stringify</code> just perform better than the NodeJs standard
+<code>JSON.stringify</code>???
+</p>
+
+<p>
+Well yes! But this is an older version of NodeJs (`v18.20.3`). Turns out, for
+this version (and lower also perhaps) our custom made `json<sub>stringify</sub>` works
+faster than the standard library one!
+</p>
+
+<p>
+All the tests for this article (except this last one) has been done with <b><b>Node
+v22.6.0</b></b>
+</p>
+
+<p>
+The performance of JSON.stringify has increased from v18 to v22. This is so
+great
+</p>
+
+<p>
+It is also important to note that, our script performed better in NodeJs v22.
+So, it means, NodeJs has increased the overall performance of the runtime too.
+Possibly an update has happened to the underlying <b><b>V8 engine</b></b> itself.
+</p>
+
+<p>
+Well, this has been an enjoyable experience for me. And I hope it will be for
+you too. And in the midst of all this enjoyment, we learnt a thing or two!
+</p>
+
+<p>
+Keep building, keep testing!
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>
